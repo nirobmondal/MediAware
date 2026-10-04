@@ -22,4 +22,5 @@ android {
 dependencies {
     // Kotlinx Serialization for JSON encoding of chronic conditions list
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
 }

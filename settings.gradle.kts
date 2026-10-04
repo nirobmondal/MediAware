@@ -35,3 +35,5 @@ include(":core:designsystem")
 
 // Feature modules
 include(":features:auth")
+include(":features:home")
+include(":features:settings")

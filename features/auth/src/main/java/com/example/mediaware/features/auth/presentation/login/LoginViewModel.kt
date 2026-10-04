@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mediaware.core.common.base.BaseViewModel
 import com.example.mediaware.core.common.security.PinSecurityManager
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
-import com.example.mediaware.features.auth.domain.repository.UserRepository
+import com.example.mediaware.core.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

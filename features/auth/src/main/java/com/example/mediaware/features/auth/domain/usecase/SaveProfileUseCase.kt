@@ -2,7 +2,7 @@ package com.example.mediaware.features.auth.domain.usecase
 
 import com.example.mediaware.core.common.result.Resource
 import com.example.mediaware.core.model.Gender
-import com.example.mediaware.features.auth.domain.repository.UserRepository
+import com.example.mediaware.core.domain.repository.UserRepository
 import javax.inject.Inject
 
 class SaveProfileUseCase @Inject constructor(

@@ -41,6 +41,8 @@ android {
 dependencies {
     // Feature modules
     implementation(project(":features:auth"))
+    implementation(project(":features:home"))
+    implementation(project(":features:settings"))
 
     // Core modules
     implementation(project(":core:common"))

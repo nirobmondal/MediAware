@@ -4,12 +4,18 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.mediaware.core.database.converter.StringListConverter
+import com.example.mediaware.core.database.dao.MedicineCacheDao
+import com.example.mediaware.core.database.dao.TestInfoCacheDao
 import com.example.mediaware.core.database.dao.UserProfileDao
+import com.example.mediaware.core.database.entity.MedicineCacheEntity
+import com.example.mediaware.core.database.entity.TestInfoCacheEntity
 import com.example.mediaware.core.database.entity.UserProfileEntity
 
 @Database(
     entities = [
-        UserProfileEntity::class
+        UserProfileEntity::class,
+        MedicineCacheEntity::class,
+        TestInfoCacheEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -17,6 +23,8 @@ import com.example.mediaware.core.database.entity.UserProfileEntity
 @TypeConverters(StringListConverter::class)
 abstract class MediAwareDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun medicineCacheDao(): MedicineCacheDao
+    abstract fun testInfoCacheDao(): TestInfoCacheDao
 
     companion object {
         const val DATABASE_NAME = "mediaware_db"

@@ -2,7 +2,7 @@ package com.example.mediaware.features.auth.domain.usecase
 
 import com.example.mediaware.core.common.result.Resource
 import com.example.mediaware.core.common.security.PinSecurityManager
-import com.example.mediaware.features.auth.domain.repository.UserRepository
+import com.example.mediaware.core.domain.repository.UserRepository
 import javax.inject.Inject
 
 class VerifyPinUseCase @Inject constructor(

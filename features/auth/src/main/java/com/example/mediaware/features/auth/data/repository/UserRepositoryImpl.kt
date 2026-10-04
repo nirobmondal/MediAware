@@ -12,7 +12,7 @@ import com.example.mediaware.core.model.Gender
 import com.example.mediaware.core.model.SessionStatus
 import com.example.mediaware.core.model.UserCredentials
 import com.example.mediaware.core.model.UserProfile
-import com.example.mediaware.features.auth.domain.repository.UserRepository
+import com.example.mediaware.core.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first

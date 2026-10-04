@@ -1,4 +1,4 @@
-package com.example.mediaware.features.auth.domain.repository
+package com.example.mediaware.core.domain.repository
 
 import com.example.mediaware.core.model.SessionStatus
 import com.example.mediaware.core.model.UserCredentials
