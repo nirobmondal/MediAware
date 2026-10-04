@@ -8,6 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mediaware.features.auth.navigation.AuthNavHost
 import com.example.mediaware.features.chamber.navigation.ChamberRoutes
 import com.example.mediaware.features.chamber.navigation.chamberGraph
+import com.example.mediaware.features.consultation.navigation.ConsultationRoutes
+import com.example.mediaware.features.consultation.navigation.consultationGraph
 import com.example.mediaware.features.home.presentation.HomeScreen
 import com.example.mediaware.features.prescription.navigation.RxRoutes
 import com.example.mediaware.features.prescription.navigation.prescriptionGraph
@@ -48,6 +50,9 @@ fun AppNavHost(
                 },
                 onNavigateToChamberHub = {
                     navController.navigate(ChamberRoutes.HUB)
+                },
+                onNavigateToConsultationSummary = {
+                    navController.navigate(ConsultationRoutes.SUMMARY)
                 }
             )
         }
@@ -83,6 +88,17 @@ fun AppNavHost(
             }
         )
         chamberGraph(
+            navController = navController,
+            onNavigateHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            },
+            onNavigateToSummary = {
+                navController.navigate(ConsultationRoutes.SUMMARY)
+            }
+        )
+        consultationGraph(
             navController = navController,
             onNavigateHome = {
                 navController.navigate("home") {

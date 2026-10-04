@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Description
@@ -34,7 +35,8 @@ fun HomeScreen(
     onNavigateToSymptomSelect: () -> Unit = {},
     onNavigateToReportCapture: () -> Unit = {},
     onNavigateToPrescription: () -> Unit = {},
-    onNavigateToChamberHub: () -> Unit = {}
+    onNavigateToChamberHub: () -> Unit = {},
+    onNavigateToConsultationSummary: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -86,7 +88,8 @@ fun HomeScreen(
                 onNavigateToSymptomSelect = onNavigateToSymptomSelect,
                 onNavigateToReportCapture = onNavigateToReportCapture,
                 onNavigateToPrescription = onNavigateToPrescription,
-                onNavigateToChamberHub = onNavigateToChamberHub
+                onNavigateToChamberHub = onNavigateToChamberHub,
+                onNavigateToConsultationSummary = onNavigateToConsultationSummary
             )
         }
     }
@@ -144,13 +147,15 @@ fun FeatureCardsGrid(
     onNavigateToSymptomSelect: () -> Unit = {},
     onNavigateToReportCapture: () -> Unit = {},
     onNavigateToPrescription: () -> Unit = {},
-    onNavigateToChamberHub: () -> Unit = {}
+    onNavigateToChamberHub: () -> Unit = {},
+    onNavigateToConsultationSummary: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
         FeatureItem("প্রেসক্রিপশন", Icons.Default.Description),
         FeatureItem("ডাক্তারের পরামর্শ", Icons.Default.ChatBubble),
-        FeatureItem("চেম্বার মোড", Icons.Default.MedicalServices)
+        FeatureItem("চেম্বার মোড", Icons.Default.MedicalServices),
+        FeatureItem("ভিজিট সারাংশ", Icons.AutoMirrored.Filled.Assignment)
     )
 
     LazyVerticalGrid(
@@ -167,6 +172,7 @@ fun FeatureCardsGrid(
                         "ল্যাব রিপোর্ট" -> onNavigateToReportCapture()
                         "প্রেসক্রিপশন" -> onNavigateToPrescription()
                         "চেম্বার মোড" -> onNavigateToChamberHub()
+                        "ভিজিট সারাংশ" -> onNavigateToConsultationSummary()
                     }
                 }
             )

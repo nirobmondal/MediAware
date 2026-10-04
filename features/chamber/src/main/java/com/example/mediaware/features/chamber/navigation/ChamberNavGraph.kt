@@ -28,7 +28,8 @@ object ChamberRoutes {
 
 fun NavGraphBuilder.chamberGraph(
     navController: NavController,
-    onNavigateHome: () -> Unit
+    onNavigateHome: () -> Unit,
+    onNavigateToSummary: () -> Unit = {}
 ) {
     navigation(
         startDestination = ChamberRoutes.HUB,
@@ -60,6 +61,7 @@ fun NavGraphBuilder.chamberGraph(
                 onNavigateToQuickRef = { navController.navigate(ChamberRoutes.QUICK_REF) },
                 onNavigateToChecklist = { navController.navigate(ChamberRoutes.CHECKLIST) },
                 onNavigateToRecorder = { navController.navigate(ChamberRoutes.RECORDER) },
+                onNavigateToSummary = onNavigateToSummary,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -8,8 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -32,6 +31,7 @@ fun ChamberHubScreen(
     onNavigateToQuickRef: () -> Unit,
     onNavigateToChecklist: () -> Unit,
     onNavigateToRecorder: () -> Unit,
+    onNavigateToSummary: () -> Unit = {},
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
@@ -95,7 +95,7 @@ fun ChamberHubScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
-                                imageVector = if (uiState.isRingerMuted) Icons.Default.VolumeOff else Icons.Default.NotificationsActive,
+                                imageVector = if (uiState.isRingerMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.Default.NotificationsActive,
                                 contentDescription = null,
                                 tint = if (uiState.isRingerMuted) Color(0xFF2E7D32) else Color(0xFFE65100),
                                 modifier = Modifier.size(28.dp)
@@ -140,7 +140,7 @@ fun ChamberHubScreen(
             // Portal 1: Quick Reference Card
             item {
                 ChamberActionCard(
-                    icon = Icons.Default.Assignment,
+                    icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "ডাক্তার প্রেজেন্টেশন কার্ড",
                     subtitle = "ডাক্তারকে আপনার সাম্প্রতিক সুগার, রক্তচাপ ও লক্ষণসমূহ একনজরে দেখান।",
                     badgeText = "💡 ওয়েক-লক ও টাচ-লক",
@@ -151,7 +151,7 @@ fun ChamberHubScreen(
             // Portal 2: Question Checklist
             item {
                 ChamberActionCard(
-                    icon = Icons.Default.FactCheck,
+                    icon = Icons.AutoMirrored.Filled.FactCheck,
                     title = "ডাক্তারের জন্য প্রশ্ন তালিকা",
                     subtitle = "জরুরি প্রশ্নগুলোর উত্তর জেনে নিয়ে চেকলিস্টে টিকচিহ্ন দিন।",
                     badgeText = uiState.progressFormattedBn,
@@ -167,6 +167,17 @@ fun ChamberHubScreen(
                     subtitle = "ডাক্তারের মৌখিক অনুমতি সাপেক্ষে পরামর্শ রেকর্ড করুন।",
                     badgeText = "⏱️ ১৫ মিনিট সর্বোচ্চ সীমা",
                     onClick = onNavigateToRecorder
+                )
+            }
+
+            // Portal 4: Consultation Summary & Action Plan (Screen 24)
+            item {
+                ChamberActionCard(
+                    icon = Icons.AutoMirrored.Filled.Assignment,
+                    title = "ভিজিট সারাংশ ও কর্মপরিকল্পনা",
+                    subtitle = "পরামর্শের মূল নির্দেশনা, করণীয় তালিকা ও পরবর্তী ফলো-আপ রিমাইন্ডার।",
+                    badgeText = "📝 সারাংশ ও ক্যালেন্ডার",
+                    onClick = onNavigateToSummary
                 )
             }
 
