@@ -5,9 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mediaware.features.auth.navigation.AuthNavHost
 import com.example.mediaware.features.home.presentation.HomeScreen
 import com.example.mediaware.features.settings.presentation.SettingsScreen
-import com.example.mediaware.features.auth.navigation.AuthNavHost
+import com.example.mediaware.features.symptom.navigation.SymptomRoutes
+import com.example.mediaware.features.symptom.navigation.symptomGraph
 
 @Composable
 fun AppNavHost(
@@ -28,6 +30,9 @@ fun AppNavHost(
             HomeScreen(
                 onNavigateToSettings = {
                     navController.navigate("settings")
+                },
+                onNavigateToSymptomSelect = {
+                    navController.navigate(SymptomRoutes.SELECT)
                 }
             )
         }
@@ -38,5 +43,13 @@ fun AppNavHost(
                 }
             )
         }
+        symptomGraph(
+            navController = navController,
+            onNavigateToHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        )
     }
 }

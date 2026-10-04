@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":features:auth"))
     implementation(project(":features:home"))
     implementation(project(":features:settings"))
+    implementation(project(":features:symptom"))
 
     // Core modules
     implementation(project(":core:common"))

@@ -29,7 +29,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToSymptomSelect: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -77,7 +78,7 @@ fun HomeScreen(
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(16.dp))
-            FeatureCardsGrid()
+            FeatureCardsGrid(onNavigateToSymptomSelect = onNavigateToSymptomSelect)
         }
     }
 }
@@ -130,7 +131,9 @@ fun NextDoseCard(reminder: UpcomingReminderUiModel) {
 }
 
 @Composable
-fun FeatureCardsGrid() {
+fun FeatureCardsGrid(
+    onNavigateToSymptomSelect: () -> Unit = {}
+) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
         FeatureItem("প্রেসক্রিপশন", Icons.Default.Description),
@@ -144,7 +147,14 @@ fun FeatureCardsGrid() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(features) { feature ->
-            FeatureCard(feature)
+            FeatureCard(
+                feature = feature,
+                onClick = {
+                    if (feature.title == "ডাক্তারের পরামর্শ") {
+                        onNavigateToSymptomSelect()
+                    }
+                }
+            )
         }
     }
 }
@@ -152,12 +162,15 @@ fun FeatureCardsGrid() {
 data class FeatureItem(val title: String, val icon: ImageVector)
 
 @Composable
-fun FeatureCard(feature: FeatureItem) {
+fun FeatureCard(
+    feature: FeatureItem,
+    onClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { /* Navigate to feature */ },
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
