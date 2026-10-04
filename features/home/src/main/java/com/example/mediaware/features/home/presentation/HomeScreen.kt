@@ -31,7 +31,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToSettings: () -> Unit,
     onNavigateToSymptomSelect: () -> Unit = {},
-    onNavigateToReportCapture: () -> Unit = {}
+    onNavigateToReportCapture: () -> Unit = {},
+    onNavigateToPrescription: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -81,7 +82,8 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
             FeatureCardsGrid(
                 onNavigateToSymptomSelect = onNavigateToSymptomSelect,
-                onNavigateToReportCapture = onNavigateToReportCapture
+                onNavigateToReportCapture = onNavigateToReportCapture,
+                onNavigateToPrescription = onNavigateToPrescription
             )
         }
     }
@@ -137,7 +139,8 @@ fun NextDoseCard(reminder: UpcomingReminderUiModel) {
 @Composable
 fun FeatureCardsGrid(
     onNavigateToSymptomSelect: () -> Unit = {},
-    onNavigateToReportCapture: () -> Unit = {}
+    onNavigateToReportCapture: () -> Unit = {},
+    onNavigateToPrescription: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
@@ -158,6 +161,7 @@ fun FeatureCardsGrid(
                     when (feature.title) {
                         "ডাক্তারের পরামর্শ" -> onNavigateToSymptomSelect()
                         "ল্যাব রিপোর্ট" -> onNavigateToReportCapture()
+                        "প্রেসক্রিপশন" -> onNavigateToPrescription()
                     }
                 }
             )

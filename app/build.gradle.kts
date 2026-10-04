@@ -45,6 +45,7 @@ dependencies {
     implementation(project(":features:settings"))
     implementation(project(":features:symptom"))
     implementation(project(":features:report"))
+    implementation(project(":features:prescription"))
 
     // Core modules
     implementation(project(":core:common"))
