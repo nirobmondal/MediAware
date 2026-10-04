@@ -32,6 +32,7 @@ include(":core:common")
 include(":core:model")
 include(":core:database")
 include(":core:designsystem")
+include(":core:voice")
 
 // Feature modules
 include(":features:auth")
@@ -40,3 +41,4 @@ include(":features:settings")
 include(":features:symptom")
 include(":features:report")
 include(":features:prescription")
+include(":features:chamber")

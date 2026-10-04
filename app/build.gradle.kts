@@ -46,10 +46,12 @@ dependencies {
     implementation(project(":features:symptom"))
     implementation(project(":features:report"))
     implementation(project(":features:prescription"))
+    implementation(project(":features:chamber"))
 
     // Core modules
     implementation(project(":core:common"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:voice"))
 
     // Hilt
     implementation(libs.hilt.android)

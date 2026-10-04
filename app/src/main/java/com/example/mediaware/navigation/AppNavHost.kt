@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mediaware.features.auth.navigation.AuthNavHost
+import com.example.mediaware.features.chamber.navigation.ChamberRoutes
+import com.example.mediaware.features.chamber.navigation.chamberGraph
 import com.example.mediaware.features.home.presentation.HomeScreen
 import com.example.mediaware.features.prescription.navigation.RxRoutes
 import com.example.mediaware.features.prescription.navigation.prescriptionGraph
@@ -43,6 +45,9 @@ fun AppNavHost(
                 },
                 onNavigateToPrescription = {
                     navController.navigate(RxRoutes.CAPTURE)
+                },
+                onNavigateToChamberHub = {
+                    navController.navigate(ChamberRoutes.HUB)
                 }
             )
         }
@@ -70,6 +75,14 @@ fun AppNavHost(
             }
         )
         prescriptionGraph(
+            navController = navController,
+            onNavigateHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        )
+        chamberGraph(
             navController = navController,
             onNavigateHome = {
                 navController.navigate("home") {

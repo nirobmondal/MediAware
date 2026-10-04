@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
@@ -32,7 +33,8 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToSymptomSelect: () -> Unit = {},
     onNavigateToReportCapture: () -> Unit = {},
-    onNavigateToPrescription: () -> Unit = {}
+    onNavigateToPrescription: () -> Unit = {},
+    onNavigateToChamberHub: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -83,7 +85,8 @@ fun HomeScreen(
             FeatureCardsGrid(
                 onNavigateToSymptomSelect = onNavigateToSymptomSelect,
                 onNavigateToReportCapture = onNavigateToReportCapture,
-                onNavigateToPrescription = onNavigateToPrescription
+                onNavigateToPrescription = onNavigateToPrescription,
+                onNavigateToChamberHub = onNavigateToChamberHub
             )
         }
     }
@@ -140,13 +143,14 @@ fun NextDoseCard(reminder: UpcomingReminderUiModel) {
 fun FeatureCardsGrid(
     onNavigateToSymptomSelect: () -> Unit = {},
     onNavigateToReportCapture: () -> Unit = {},
-    onNavigateToPrescription: () -> Unit = {}
+    onNavigateToPrescription: () -> Unit = {},
+    onNavigateToChamberHub: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
         FeatureItem("প্রেসক্রিপশন", Icons.Default.Description),
         FeatureItem("ডাক্তারের পরামর্শ", Icons.Default.ChatBubble),
-        FeatureItem("অ্যালার্ম", Icons.Default.Alarm)
+        FeatureItem("চেম্বার মোড", Icons.Default.MedicalServices)
     )
 
     LazyVerticalGrid(
@@ -162,6 +166,7 @@ fun FeatureCardsGrid(
                         "ডাক্তারের পরামর্শ" -> onNavigateToSymptomSelect()
                         "ল্যাব রিপোর্ট" -> onNavigateToReportCapture()
                         "প্রেসক্রিপশন" -> onNavigateToPrescription()
+                        "চেম্বার মোড" -> onNavigateToChamberHub()
                     }
                 }
             )
