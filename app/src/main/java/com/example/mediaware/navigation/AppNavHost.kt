@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mediaware.features.auth.navigation.AuthNavHost
+import com.example.mediaware.features.caregiver.navigation.CaregiverRoutes
+import com.example.mediaware.features.caregiver.navigation.caregiverGraph
 import com.example.mediaware.features.chamber.navigation.ChamberRoutes
 import com.example.mediaware.features.chamber.navigation.chamberGraph
 import com.example.mediaware.features.consultation.navigation.ConsultationRoutes
@@ -64,6 +66,9 @@ fun AppNavHost(
                 },
                 onNavigateToReminders = {
                     navController.navigate(HistoryRoutes.REMINDERS)
+                },
+                onNavigateToCaregiver = {
+                    navController.navigate(CaregiverRoutes.ADD)
                 }
             )
         }
@@ -118,6 +123,14 @@ fun AppNavHost(
             }
         )
         historyGraph(
+            navController = navController,
+            onNavigateHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        )
+        caregiverGraph(
             navController = navController,
             onNavigateHome = {
                 navController.navigate("home") {

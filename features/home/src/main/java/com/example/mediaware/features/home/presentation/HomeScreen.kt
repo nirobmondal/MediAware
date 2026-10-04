@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,7 +42,8 @@ fun HomeScreen(
     onNavigateToConsultationSummary: () -> Unit = {},
     onNavigateToTimeline: () -> Unit = {},
     onNavigateToMedicineHistory: () -> Unit = {},
-    onNavigateToReminders: () -> Unit = {}
+    onNavigateToReminders: () -> Unit = {},
+    onNavigateToCaregiver: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -97,7 +99,8 @@ fun HomeScreen(
                 onNavigateToConsultationSummary = onNavigateToConsultationSummary,
                 onNavigateToTimeline = onNavigateToTimeline,
                 onNavigateToMedicineHistory = onNavigateToMedicineHistory,
-                onNavigateToReminders = onNavigateToReminders
+                onNavigateToReminders = onNavigateToReminders,
+                onNavigateToCaregiver = onNavigateToCaregiver
             )
         }
     }
@@ -159,7 +162,8 @@ fun FeatureCardsGrid(
     onNavigateToConsultationSummary: () -> Unit = {},
     onNavigateToTimeline: () -> Unit = {},
     onNavigateToMedicineHistory: () -> Unit = {},
-    onNavigateToReminders: () -> Unit = {}
+    onNavigateToReminders: () -> Unit = {},
+    onNavigateToCaregiver: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
@@ -169,7 +173,8 @@ fun FeatureCardsGrid(
         FeatureItem("ভিজিট সারাংশ", Icons.AutoMirrored.Filled.Assignment),
         FeatureItem("স্বাস্থ্য স্মৃতি", Icons.Default.Timeline),
         FeatureItem("ওষুধ ইতিহাস", Icons.Default.History),
-        FeatureItem("অ্যালার্ম সেন্টার", Icons.Default.Alarm)
+        FeatureItem("অ্যালার্ম সেন্টার", Icons.Default.Alarm),
+        FeatureItem("কেয়ারগিভার", Icons.Default.People)
     )
 
     LazyVerticalGrid(
@@ -190,6 +195,7 @@ fun FeatureCardsGrid(
                         "স্বাস্থ্য স্মৃতি" -> onNavigateToTimeline()
                         "ওষুধ ইতিহাস" -> onNavigateToMedicineHistory()
                         "অ্যালার্ম সেন্টার" -> onNavigateToReminders()
+                        "কেয়ারগিভার" -> onNavigateToCaregiver()
                     }
                 }
             )
