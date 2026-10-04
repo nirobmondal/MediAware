@@ -30,7 +30,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToSettings: () -> Unit,
-    onNavigateToSymptomSelect: () -> Unit = {}
+    onNavigateToSymptomSelect: () -> Unit = {},
+    onNavigateToReportCapture: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -78,7 +79,10 @@ fun HomeScreen(
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(16.dp))
-            FeatureCardsGrid(onNavigateToSymptomSelect = onNavigateToSymptomSelect)
+            FeatureCardsGrid(
+                onNavigateToSymptomSelect = onNavigateToSymptomSelect,
+                onNavigateToReportCapture = onNavigateToReportCapture
+            )
         }
     }
 }
@@ -132,7 +136,8 @@ fun NextDoseCard(reminder: UpcomingReminderUiModel) {
 
 @Composable
 fun FeatureCardsGrid(
-    onNavigateToSymptomSelect: () -> Unit = {}
+    onNavigateToSymptomSelect: () -> Unit = {},
+    onNavigateToReportCapture: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
@@ -150,8 +155,9 @@ fun FeatureCardsGrid(
             FeatureCard(
                 feature = feature,
                 onClick = {
-                    if (feature.title == "ডাক্তারের পরামর্শ") {
-                        onNavigateToSymptomSelect()
+                    when (feature.title) {
+                        "ডাক্তারের পরামর্শ" -> onNavigateToSymptomSelect()
+                        "ল্যাব রিপোর্ট" -> onNavigateToReportCapture()
                     }
                 }
             )

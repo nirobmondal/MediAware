@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":features:home"))
     implementation(project(":features:settings"))
     implementation(project(":features:symptom"))
+    implementation(project(":features:report"))
 
     // Core modules
     implementation(project(":core:common"))

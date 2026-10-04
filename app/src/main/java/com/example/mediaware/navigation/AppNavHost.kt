@@ -7,6 +7,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mediaware.features.auth.navigation.AuthNavHost
 import com.example.mediaware.features.home.presentation.HomeScreen
+import com.example.mediaware.features.report.navigation.ReportRoutes
+import com.example.mediaware.features.report.navigation.reportGraph
 import com.example.mediaware.features.settings.presentation.SettingsScreen
 import com.example.mediaware.features.symptom.navigation.SymptomRoutes
 import com.example.mediaware.features.symptom.navigation.symptomGraph
@@ -33,6 +35,9 @@ fun AppNavHost(
                 },
                 onNavigateToSymptomSelect = {
                     navController.navigate(SymptomRoutes.SELECT)
+                },
+                onNavigateToReportCapture = {
+                    navController.navigate(ReportRoutes.CAPTURE)
                 }
             )
         }
@@ -46,6 +51,14 @@ fun AppNavHost(
         symptomGraph(
             navController = navController,
             onNavigateToHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        )
+        reportGraph(
+            navController = navController,
+            onNavigateHome = {
                 navController.navigate("home") {
                     popUpTo("home") { inclusive = false }
                 }
