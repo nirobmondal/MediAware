@@ -23,5 +23,15 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MediAware"
+
+// App entry point
 include(":app")
- 
+
+// Core infrastructure modules
+include(":core:common")
+include(":core:model")
+include(":core:database")
+include(":core:designsystem")
+
+// Feature modules
+include(":features:auth")
