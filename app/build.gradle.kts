@@ -48,6 +48,7 @@ dependencies {
     implementation(project(":features:prescription"))
     implementation(project(":features:chamber"))
     implementation(project(":features:consultation"))
+    implementation(project(":features:history"))
 
     // Core modules
     implementation(project(":core:common"))

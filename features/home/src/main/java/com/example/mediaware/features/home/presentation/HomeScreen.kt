@@ -12,9 +12,11 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,7 +38,10 @@ fun HomeScreen(
     onNavigateToReportCapture: () -> Unit = {},
     onNavigateToPrescription: () -> Unit = {},
     onNavigateToChamberHub: () -> Unit = {},
-    onNavigateToConsultationSummary: () -> Unit = {}
+    onNavigateToConsultationSummary: () -> Unit = {},
+    onNavigateToTimeline: () -> Unit = {},
+    onNavigateToMedicineHistory: () -> Unit = {},
+    onNavigateToReminders: () -> Unit = {}
 ) {
     val uiState by viewModel.combinedState.collectAsState()
 
@@ -89,7 +94,10 @@ fun HomeScreen(
                 onNavigateToReportCapture = onNavigateToReportCapture,
                 onNavigateToPrescription = onNavigateToPrescription,
                 onNavigateToChamberHub = onNavigateToChamberHub,
-                onNavigateToConsultationSummary = onNavigateToConsultationSummary
+                onNavigateToConsultationSummary = onNavigateToConsultationSummary,
+                onNavigateToTimeline = onNavigateToTimeline,
+                onNavigateToMedicineHistory = onNavigateToMedicineHistory,
+                onNavigateToReminders = onNavigateToReminders
             )
         }
     }
@@ -148,14 +156,20 @@ fun FeatureCardsGrid(
     onNavigateToReportCapture: () -> Unit = {},
     onNavigateToPrescription: () -> Unit = {},
     onNavigateToChamberHub: () -> Unit = {},
-    onNavigateToConsultationSummary: () -> Unit = {}
+    onNavigateToConsultationSummary: () -> Unit = {},
+    onNavigateToTimeline: () -> Unit = {},
+    onNavigateToMedicineHistory: () -> Unit = {},
+    onNavigateToReminders: () -> Unit = {}
 ) {
     val features = listOf(
         FeatureItem("ল্যাব রিপোর্ট", Icons.Default.Science),
         FeatureItem("প্রেসক্রিপশন", Icons.Default.Description),
         FeatureItem("ডাক্তারের পরামর্শ", Icons.Default.ChatBubble),
         FeatureItem("চেম্বার মোড", Icons.Default.MedicalServices),
-        FeatureItem("ভিজিট সারাংশ", Icons.AutoMirrored.Filled.Assignment)
+        FeatureItem("ভিজিট সারাংশ", Icons.AutoMirrored.Filled.Assignment),
+        FeatureItem("স্বাস্থ্য স্মৃতি", Icons.Default.Timeline),
+        FeatureItem("ওষুধ ইতিহাস", Icons.Default.History),
+        FeatureItem("অ্যালার্ম সেন্টার", Icons.Default.Alarm)
     )
 
     LazyVerticalGrid(
@@ -173,6 +187,9 @@ fun FeatureCardsGrid(
                         "প্রেসক্রিপশন" -> onNavigateToPrescription()
                         "চেম্বার মোড" -> onNavigateToChamberHub()
                         "ভিজিট সারাংশ" -> onNavigateToConsultationSummary()
+                        "স্বাস্থ্য স্মৃতি" -> onNavigateToTimeline()
+                        "ওষুধ ইতিহাস" -> onNavigateToMedicineHistory()
+                        "অ্যালার্ম সেন্টার" -> onNavigateToReminders()
                     }
                 }
             )

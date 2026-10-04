@@ -10,6 +10,8 @@ import com.example.mediaware.features.chamber.navigation.ChamberRoutes
 import com.example.mediaware.features.chamber.navigation.chamberGraph
 import com.example.mediaware.features.consultation.navigation.ConsultationRoutes
 import com.example.mediaware.features.consultation.navigation.consultationGraph
+import com.example.mediaware.features.history.navigation.HistoryRoutes
+import com.example.mediaware.features.history.navigation.historyGraph
 import com.example.mediaware.features.home.presentation.HomeScreen
 import com.example.mediaware.features.prescription.navigation.RxRoutes
 import com.example.mediaware.features.prescription.navigation.prescriptionGraph
@@ -53,6 +55,15 @@ fun AppNavHost(
                 },
                 onNavigateToConsultationSummary = {
                     navController.navigate(ConsultationRoutes.SUMMARY)
+                },
+                onNavigateToTimeline = {
+                    navController.navigate(HistoryRoutes.TIMELINE)
+                },
+                onNavigateToMedicineHistory = {
+                    navController.navigate(HistoryRoutes.MEDICINE_HISTORY)
+                },
+                onNavigateToReminders = {
+                    navController.navigate(HistoryRoutes.REMINDERS)
                 }
             )
         }
@@ -99,6 +110,14 @@ fun AppNavHost(
             }
         )
         consultationGraph(
+            navController = navController,
+            onNavigateHome = {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        )
+        historyGraph(
             navController = navController,
             onNavigateHome = {
                 navController.navigate("home") {
