@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Full-screen intent permission for lock-screen alarm overlay -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+
+        <!--
+            Screen 31: AlarmAlertActivity — displays over the lock screen as a full-screen alarm.
+            showWhenLocked and turnScreenOn set programmatically in Activity.onCreate() for API 27+.
+            noHistory = true so back-stack is clean after dismissing the alarm.
+        -->
+        <activity
+            android:name=".AlarmAlertActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:noHistory="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.MediAware" />
+
+        <!--
+            Full-screen alarm receiver — fires from AlarmManager and posts a
+            Heads-Up / lock-screen notification with a fullScreenIntent.
+        -->
+        <receiver
+            android:name=".receiver.AlarmBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.mediaware.ALARM_TRIGGER_FULLSCREEN" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            BootReceiver — listens for BOOT_COMPLETED and re-registers all
+            pending dose alarms cleared by the OS during device restart.
+        -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

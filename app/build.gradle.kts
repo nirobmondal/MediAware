@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
 android {
@@ -18,6 +26,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val geminiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
     }
 
     buildTypes {
@@ -35,6 +46,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -50,6 +62,7 @@ dependencies {
     implementation(project(":features:consultation"))
     implementation(project(":features:history"))
     implementation(project(":features:caregiver"))
+    implementation(project(":features:alarm"))
 
     // Core modules
     implementation(project(":core:common"))
