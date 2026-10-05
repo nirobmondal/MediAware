@@ -3,7 +3,6 @@ package com.example.mediaware.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.example.mediaware.core.database.MediAwareDatabase
-import com.example.mediaware.core.database.dao.CaregiverDao
 import com.example.mediaware.core.database.dao.MedicineCacheDao
 import com.example.mediaware.core.database.dao.TestInfoCacheDao
 import com.example.mediaware.core.database.dao.UserProfileDao
@@ -55,11 +54,5 @@ object DatabaseModule {
     @Singleton
     fun provideTestInfoCacheDao(database: MediAwareDatabase): TestInfoCacheDao {
         return database.testInfoCacheDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideCaregiverDao(database: MediAwareDatabase): CaregiverDao {
-        return database.caregiverDao()
     }
 }

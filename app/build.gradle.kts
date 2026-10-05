@@ -63,7 +63,6 @@ dependencies {
     implementation(project(":features:chamber"))
     implementation(project(":features:consultation"))
     implementation(project(":features:history"))
-    implementation(project(":features:caregiver"))
     implementation(project(":features:alarm"))
 
     // Core modules
