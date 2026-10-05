@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.mediaware"
+        applicationId = "com.mediaware.app"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
