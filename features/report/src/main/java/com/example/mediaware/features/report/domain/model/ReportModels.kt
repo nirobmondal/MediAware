@@ -36,5 +36,5 @@ data class LabReportAnalysis(
     val criticalCount: Int,
     val borderlineCount: Int,
     val normalCount: Int,
-    val mandatoryDisclaimerBn: String = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+    val mandatoryDisclaimerBn: String = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
 )

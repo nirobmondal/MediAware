@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,13 +36,15 @@ import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
 import com.example.mediaware.features.consultation.domain.model.ActionItemCategory
 import com.example.mediaware.features.consultation.domain.model.ConsultationActionItem
+import com.example.mediaware.features.consultation.domain.model.ConsultationSummary
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsultationSummaryScreen(
     viewModel: ConsultationSummaryViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToRecordAudio: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -65,13 +68,13 @@ fun ConsultationSummaryScreen(
                 title = {
                     Column {
                         Text(
-                            text = "ডাক্তার ভিজিট সারাংশ",
-                            fontSize = 18.sp,
+                            text = "ডাক্তার ভিজিট ও পরামর্শ সারাংশ",
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "পরামর্শ সারাংশ ও করণীয় কর্মপরিকল্পনা",
-                            fontSize = 12.sp,
+                            text = "তারিখভিত্তিক সারসংক্ষেপ ও কর্মপরিকল্পনা",
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -81,8 +84,32 @@ fun ConsultationSummaryScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "ফিরে যান")
                     }
                 },
+                actions = {
+                    IconButton(onClick = onNavigateToRecordAudio) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "নতুন অডিও রেকর্ড",
+                            tint = PrimaryTeal
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
+        },
+        floatingActionButton = {
+            if (uiState.consultations.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToRecordAudio,
+                    containerColor = PrimaryTeal,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(28.dp),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+                ) {
+                    Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("নতুন পরামর্শ রেকর্ড", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -94,382 +121,427 @@ fun ConsultationSummaryScreen(
             ) {
                 CircularProgressIndicator(color = PrimaryTeal)
             }
-        } else {
-            val summary = uiState.summary
-            if (summary != null) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+        } else if (uiState.consultations.isEmpty()) {
+            // Empty State
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    item {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        // Mandatory Clinical Deferral Disclaimer (Guardrail #3)
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
-                            border = BorderStroke(1.dp, Color(0xFFFFB74D)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = Color(0xFFE65100),
-                                    modifier = Modifier.size(22.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = summary.disclaimerBn,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFE65100),
-                                    lineHeight = 16.sp
-                                )
-                            }
-                        }
-                    }
-
-                    // Doctor Consultation Note Card
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.Assignment,
-                                            contentDescription = null,
-                                            tint = PrimaryTeal,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "ডাক্তার যা বললেন:",
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-
-                                    Surface(
-                                        color = PrimaryTeal.copy(alpha = 0.10f),
-                                        shape = RoundedCornerShape(6.dp)
-                                    ) {
-                                        Text(
-                                            text = summary.visitDateBn,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = PrimaryTeal,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    text = "\"${summary.summaryBn}\"",
-                                    fontSize = 13.sp,
-                                    lineHeight = 19.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "পরামর্শক: ${summary.doctorName}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = PrimaryTeal
-                                )
-                            }
-                        }
-                    }
-
-                    // Categorized Action Items Header & Progress
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.Checklist,
-                                            contentDescription = null,
-                                            tint = PrimaryTeal,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "আপনার করণীয় তালিকা:",
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-
-                                    Surface(
-                                        color = PrimaryTeal.copy(alpha = 0.12f),
-                                        shape = RoundedCornerShape(6.dp)
-                                    ) {
-                                        Text(
-                                            text = uiState.progressFormattedBn,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrimaryTeal,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-                                val animatedProgress by animateFloatAsState(
-                                    targetValue = uiState.progressFraction,
-                                    label = "actionProgress"
-                                )
-                                LinearProgressIndicator(
-                                    progress = { animatedProgress },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(6.dp)
-                                        .clip(RoundedCornerShape(3.dp)),
-                                    color = PrimaryTeal,
-                                    trackColor = PrimaryTeal.copy(alpha = 0.15f)
-                                )
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                // Category Filter Chips
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    item {
-                                        FilterChip(
-                                            selected = uiState.selectedCategory == null,
-                                            onClick = {
-                                                viewModel.onEvent(ConsultationSummaryUiEvent.OnSelectCategory(null))
-                                            },
-                                            label = { Text("সকল (${uiState.totalItemCount.toString().toBengaliDigits()})", fontSize = 11.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = PrimaryTeal,
-                                                selectedLabelColor = Color.White
-                                            )
-                                        )
-                                    }
-                                    items(ActionItemCategory.values()) { category ->
-                                        val count = summary.actionItems.count { it.category == category }
-                                        FilterChip(
-                                            selected = uiState.selectedCategory == category,
-                                            onClick = {
-                                                viewModel.onEvent(ConsultationSummaryUiEvent.OnSelectCategory(category))
-                                            },
-                                            label = { Text("${category.labelBn} (${count.toString().toBengaliDigits()})", fontSize = 11.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = PrimaryTeal,
-                                                selectedLabelColor = Color.White
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Action Items List
-                    items(uiState.filteredActionItems, key = { it.id }) { item ->
-                        ActionItemRow(
-                            item = item,
-                            onToggle = { viewModel.onEvent(ConsultationSummaryUiEvent.OnToggleActionItem(item.id)) }
-                        )
-                    }
-
-                    // Pending Questions Card (Unaddressed)
-                    if (summary.pendingQuestions.isNotEmpty()) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                            contentDescription = null,
-                                            tint = Color(0xFF1565C0),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "জিজ্ঞেস করা বাকি ছিল:",
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    summary.pendingQuestions.forEach { question ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 4.dp),
-                                            verticalAlignment = Alignment.Top
-                                        ) {
-                                            Text("• ", fontSize = 13.sp, color = Color(0xFF1565C0), fontWeight = FontWeight.Bold)
-                                            Text(
-                                                text = question,
-                                                fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                lineHeight = 17.sp
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Follow-Up Appointment & Calendar Scheduling CTA Card
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (uiState.isCalendarScheduled) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surface
-                            ),
-                            border = BorderStroke(
-                                1.dp,
-                                if (uiState.isCalendarScheduled) Color(0xFF81C784) else PrimaryTeal.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .background(
-                                                if (uiState.isCalendarScheduled) Color(0xFF2E7D32).copy(alpha = 0.12f) else PrimaryTeal.copy(alpha = 0.12f),
-                                                CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = if (uiState.isCalendarScheduled) Icons.Default.EventAvailable else Icons.Default.Event,
-                                            contentDescription = null,
-                                            tint = if (uiState.isCalendarScheduled) Color(0xFF2E7D32) else PrimaryTeal,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(12.dp))
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "পরবর্তী ফলো-আপ ভিজিট",
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = "${summary.followUpDateStringBn} — ${summary.followUpReasonBn}",
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            lineHeight = 16.sp
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                Button(
-                                    onClick = { viewModel.onEvent(ConsultationSummaryUiEvent.OnScheduleCalendar) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (uiState.isCalendarScheduled) Color(0xFF2E7D32) else PrimaryTeal
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = if (uiState.isCalendarScheduled) Icons.Default.CheckCircle else Icons.Default.CalendarMonth,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = if (uiState.isCalendarScheduled) "✅ ক্যালেন্ডারে যুক্ত করা হয়েছে" else "পরবর্তী ভিজিট ক্যালেন্ডারে যুক্ত করুন",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(PrimaryTeal.copy(alpha = 0.12f), CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Assignment,
+                            imageVector = Icons.Default.MicNone,
                             contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            modifier = Modifier.size(36.dp),
+                            tint = PrimaryTeal
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(
+                        text = "এখনো কোনো পরামর্শ রেকর্ড করা হয়নি",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "ডাক্তারের সাথে সাক্ষাতের সময় আলোচনা রেকর্ড করুন। আমাদের জেমিনি এআই স্বয়ংক্রিয়ভাবে তারিখভিত্তিক সারাংশ, প্রেসক্রিপশন ও করণীয় কর্মপরিকল্পনা তৈরি করে দেবে।",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = onNavigateToRecordAudio,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal),
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("পরামর্শ অডিও রেকর্ড শুরু করুন", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        } else {
+            // Date-wise list of consultations (recent on top)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    // Clinical Safety Disclaimer (Guardrail #3)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                        border = BorderStroke(1.dp, Color(0xFFFFB74D)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFE65100),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "এটি কোনো প্রেসক্রিপশন নয়। শুধুমাত্র ডাক্তারের পরামর্শের সারাংশ। যেকোনো সিদ্ধান্তে চিকিৎসকের পরামর্শ নিন।",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFE65100),
+                                lineHeight = 15.sp
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "কোনো ভিজিট সারাংশ পাওয়া যায়নি",
-                            fontSize = 16.sp,
+                            text = "সংরক্ষিত পরামর্শ সমূহ (${uiState.consultations.size.toString().toBengaliDigits()} টি)",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "ডাক্তারের পরামর্শের অডিও রেকর্ড বা নোট সংরক্ষণ করার পর এখানে বিস্তারিত কর্মপরিকল্পনা ও ফলো-আপ দেখতে পাবেন।",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            text = "সর্বশেষটি শীর্ষে",
+                            fontSize = 11.sp,
+                            color = PrimaryTeal,
+                            fontWeight = FontWeight.SemiBold
                         )
+                    }
+                }
+
+                items(uiState.consultations, key = { it.id }) { summary ->
+                    val isExpanded = uiState.expandedConsultationId == summary.id
+                    val isCalendarScheduled = uiState.scheduledCalendarIds.contains(summary.id)
+
+                    ConsultationSummaryCard(
+                        summary = summary,
+                        isExpanded = isExpanded,
+                        isCalendarScheduled = isCalendarScheduled,
+                        selectedCategory = uiState.selectedCategory,
+                        onToggleExpand = { viewModel.onEvent(ConsultationSummaryUiEvent.OnToggleExpand(summary.id)) },
+                        onToggleActionItem = { itemId -> viewModel.onEvent(ConsultationSummaryUiEvent.OnToggleActionItem(summary.id, itemId)) },
+                        onSelectCategory = { cat -> viewModel.onEvent(ConsultationSummaryUiEvent.OnSelectCategory(cat)) },
+                        onScheduleCalendar = { viewModel.onEvent(ConsultationSummaryUiEvent.OnScheduleCalendar(summary.id)) },
+                        onDelete = { viewModel.onEvent(ConsultationSummaryUiEvent.OnDeleteConsultation(summary.id)) }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(72.dp)) // Extra space for FAB
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ConsultationSummaryCard(
+    summary: ConsultationSummary,
+    isExpanded: Boolean,
+    isCalendarScheduled: Boolean,
+    selectedCategory: ActionItemCategory?,
+    onToggleExpand: () -> Unit,
+    onToggleActionItem: (String) -> Unit,
+    onSelectCategory: (ActionItemCategory?) -> Unit,
+    onScheduleCalendar: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val totalCount = summary.actionItems.size
+    val completedCount = summary.actionItems.count { it.isCompleted }
+    val progressFraction = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+    val progressAnimated by animateFloatAsState(targetValue = progressFraction, label = "progress")
+
+    val filteredItems = remember(summary.actionItems, selectedCategory) {
+        if (selectedCategory == null) summary.actionItems else summary.actionItems.filter { it.category == selectedCategory }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.2.dp, if (isExpanded) PrimaryTeal.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header Row: Date & Doctor
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggleExpand),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Surface(
+                        color = PrimaryTeal.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = summary.visitDateBn,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryTeal,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = summary.doctorName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "মুছে ফেলুন",
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onToggleExpand,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "সংকুচিত করুন" else "প্রসারিত করুন",
+                            tint = PrimaryTeal
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Action Items Progress Bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "করণীয় অগ্রগতি:",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "${completedCount.toString().toBengaliDigits()} / ${totalCount.toString().toBengaliDigits()} সম্পন্ন",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryTeal
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { progressAnimated },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = PrimaryTeal,
+                trackColor = PrimaryTeal.copy(alpha = 0.15f)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Advice summary excerpt / full text
+            if (!isExpanded) {
+                Text(
+                    text = "\"${summary.summaryBn}\"",
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } else {
+                Text(
+                    text = "\"${summary.summaryBn}\"",
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Expanded Full Details
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(top = 14.dp)) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Category Filter Chips
+                    Text(
+                        text = "করণীয় তালিকা ফিল্টার:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == null,
+                                onClick = { onSelectCategory(null) },
+                                label = { Text("সকল (${totalCount.toString().toBengaliDigits()})", fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryTeal,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                        items(ActionItemCategory.values()) { cat ->
+                            val count = summary.actionItems.count { it.category == cat }
+                            FilterChip(
+                                selected = selectedCategory == cat,
+                                onClick = { onSelectCategory(cat) },
+                                label = { Text("${cat.labelBn} (${count.toString().toBengaliDigits()})", fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryTeal,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Action Items List
+                    filteredItems.forEach { item ->
+                        ActionItemRow(
+                            item = item,
+                            onToggle = { onToggleActionItem(item.id) }
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+
+                    // Pending Questions Section
+                    if (summary.pendingQuestions.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                            border = BorderStroke(1.dp, Color(0xFF90CAF9))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                                        contentDescription = null,
+                                        tint = Color(0xFF1565C0),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "জিজ্ঞেস করা বাকি বা পরবর্তী প্রশ্ন:",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1565C0)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                summary.pendingQuestions.forEach { q ->
+                                    Text("• $q", fontSize = 12.sp, color = Color(0xFF0D47A1), lineHeight = 16.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    // Follow-up Appointment & Calendar Card
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isCalendarScheduled) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        ),
+                        border = BorderStroke(1.dp, if (isCalendarScheduled) Color(0xFF81C784) else PrimaryTeal.copy(alpha = 0.3f))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = if (isCalendarScheduled) Icons.Default.EventAvailable else Icons.Default.Event,
+                                    contentDescription = null,
+                                    tint = if (isCalendarScheduled) Color(0xFF2E7D32) else PrimaryTeal,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "পরবর্তী ফলো-আপ ভিজিট: ${summary.followUpDateStringBn}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = summary.followUpReasonBn,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Button(
+                                onClick = onScheduleCalendar,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isCalendarScheduled) Color(0xFF2E7D32) else PrimaryTeal
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (isCalendarScheduled) Icons.Default.CheckCircle else Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isCalendarScheduled) "✅ ক্যালেন্ডারে যুক্ত হয়েছে" else "পরবর্তী ভিজিট ক্যালেন্ডারে যুক্ত করুন",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -486,19 +558,19 @@ fun ActionItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.isCompleted) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface
+            containerColor = if (item.isCompleted) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             1.dp,
-            if (item.isCompleted) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            if (item.isCompleted) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -510,7 +582,7 @@ fun ActionItemRow(
                 )
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Surface(
@@ -526,15 +598,15 @@ fun ActionItemRow(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
                     text = item.task,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = if (item.isCompleted) FontWeight.Normal else FontWeight.Medium,
                     color = if (item.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
                     textDecoration = if (item.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    lineHeight = 18.sp
+                    lineHeight = 17.sp
                 )
             }
         }

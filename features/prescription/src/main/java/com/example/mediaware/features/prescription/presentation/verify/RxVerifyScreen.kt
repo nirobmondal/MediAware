@@ -87,7 +87,7 @@ fun RxVerifyScreen(
                             Text("তথ্য বিশ্লেষণ হচ্ছে...", fontSize = 15.sp)
                         } else {
                             Text(
-                                text = "সব ঠিক আছে, ওষুধের তথ্য দেখুন ➡️",
+                                text = "সব ঠিক আছে, ওষুধের তথ্য দেখুন",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -123,7 +123,7 @@ fun RxVerifyScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "শনাক্তকৃত ওষুধের নাম বা মাত্রা ভুল হলে ✏️ আইকনে চাপ দিয়ে সংশোধন করে নিন।",
+                            text = "শনাক্তকৃত ওষুধের নাম বা মাত্রা ভুল হলে এডিট আইকনে চাপ দিয়ে সংশোধন করে নিন।",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

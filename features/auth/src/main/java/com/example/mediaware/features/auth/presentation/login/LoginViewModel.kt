@@ -26,8 +26,9 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             val credentials = userRepository.getUserCredentials()
             if (credentials != null) {
+                setState { copy(isBiometricAvailable = credentials.isBiometricEnabled) }
                 userRepository.getUserProfileFlow().collect { profile ->
-                    if (profile != null && profile.fullName.isNotBlank()) {
+                    if (profile != null) {
                         setState {
                             copy(
                                 userName = profile.fullName,
@@ -52,10 +53,10 @@ class LoginViewModel @Inject constructor(
     private fun handleKeypadInput(digit: Char) {
         if (uiState.value.lockRemainingSeconds > 0) return
         val currentPin = uiState.value.enteredPin
-        if (currentPin.length < 5) {
+        if (currentPin.length < 4) {
             val updatedPin = currentPin + digit
             setState { copy(enteredPin = updatedPin, errorMessageBn = null) }
-            if (updatedPin.length == 5) {
+            if (updatedPin.length == 4) {
                 verifyPin(updatedPin)
             }
         }

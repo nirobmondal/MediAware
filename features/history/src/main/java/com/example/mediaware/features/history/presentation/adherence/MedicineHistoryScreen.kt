@@ -94,7 +94,7 @@ fun MedicineHistoryScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚠️ এটি কোনো প্রেসক্রিপশন পরিবর্তনের নির্দেশনা নয়। ডাক্তারের পরামর্শ ছাড়া ডোজ পরিবর্তন করবেন না।",
+                            text = "এটি কোনো প্রেসক্রিপশন পরিবর্তনের নির্দেশনা নয়। ডাক্তারের পরামর্শ ছাড়া ডোজ পরিবর্তন করবেন না।",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFFE65100),
@@ -503,7 +503,7 @@ fun AdherenceRecordRow(
                     ),
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    Text("⏱️ স্থগিত", fontSize = 11.sp, color = Color(0xFFE65100))
+                    Text("স্থগিত", fontSize = 11.sp, color = Color(0xFFE65100))
                 }
             }
         }

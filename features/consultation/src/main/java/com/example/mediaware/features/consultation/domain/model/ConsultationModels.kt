@@ -24,5 +24,5 @@ data class ConsultationSummary(
     val followUpDays: Int,
     val followUpDateStringBn: String,
     val followUpReasonBn: String,
-    val disclaimerBn: String = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। শুধুমাত্র ডাক্তারের পরামর্শের সারাংশ। যেকোনো সিদ্ধান্তে ডাক্তারের সাথে কথা বলুন।"
+    val disclaimerBn: String = "এটি কোনো প্রেসক্রিপশন নয়। শুধুমাত্র ডাক্তারের পরামর্শের সারাংশ। যেকোনো সিদ্ধান্তে ডাক্তারের সাথে কথা বলুন।"
 )

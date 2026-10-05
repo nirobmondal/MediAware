@@ -80,7 +80,7 @@ fun MedicineExplainScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "⏰ ওষুধের সময়সূচী ও অ্যালার্ম সেট করুন ➡️",
+                            text = "ওষুধের সময়সূচী ও অ্যালার্ম সেট করুন",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -109,7 +109,12 @@ fun MedicineExplainScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("⚠️", fontSize = 20.sp)
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFE65100),
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "এটি কোনো প্রেসক্রিপশন নয়। শুধুমাত্র তথ্যের জন্য। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
@@ -356,7 +361,12 @@ fun MedicineExplanationCard(
                     modifier = Modifier.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("⚠️", fontSize = 14.sp)
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFE65100),
+                        modifier = Modifier.size(14.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = explanation.criticalWarningsBn,

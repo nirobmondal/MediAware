@@ -6,11 +6,14 @@ import com.example.mediaware.core.common.base.ViewState
 import com.example.mediaware.core.model.Gender
 
 data class ProfileSetupUiState(
+    val currentStep: Int = 1,
+    val totalSteps: Int = 3,
     val fullName: String = "",
     val ageString: String = "",
     val selectedGender: Gender = Gender.MALE,
     val selectedBloodGroup: String? = null,
     val selectedChronicConditions: Set<String> = emptySet(),
+    val otherCondition: String = "",
     val isSaving: Boolean = false,
     val validationErrorBn: String? = null
 ) : ViewState
@@ -21,6 +24,9 @@ sealed interface ProfileSetupUiEvent : ViewEvent {
     data class OnGenderSelected(val gender: Gender) : ProfileSetupUiEvent
     data class OnBloodGroupSelected(val bloodGroup: String) : ProfileSetupUiEvent
     data class OnToggleChronicCondition(val conditionKey: String) : ProfileSetupUiEvent
+    data class OnOtherConditionChanged(val other: String) : ProfileSetupUiEvent
+    data object OnNextStepClicked : ProfileSetupUiEvent
+    data object OnPreviousStepClicked : ProfileSetupUiEvent
     data object SaveProfile : ProfileSetupUiEvent
 }
 

@@ -63,7 +63,9 @@ dependencies {
     implementation(project(":features:chamber"))
     implementation(project(":features:consultation"))
     implementation(project(":features:history"))
-    implementation(project(":features:alarm"))
+
+    // Biometric
+    implementation(libs.androidx.biometric)
 
     // Core modules
     implementation(project(":core:common"))

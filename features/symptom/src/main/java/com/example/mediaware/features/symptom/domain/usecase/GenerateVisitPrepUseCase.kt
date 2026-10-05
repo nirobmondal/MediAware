@@ -58,7 +58,7 @@ class GenerateVisitPrepUseCase @Inject constructor() {
             chiefComplaintsSummaryBn = chiefComplaints,
             doctorSpeakingPointsBn = speakingPoints,
             doctorQuestionsBn = doctorQuestions,
-            mandatoryDisclaimerBn = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+            mandatoryDisclaimerBn = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
         )
     }
 

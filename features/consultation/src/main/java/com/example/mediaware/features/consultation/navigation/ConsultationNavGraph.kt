@@ -13,7 +13,8 @@ object ConsultationRoutes {
 
 fun NavGraphBuilder.consultationGraph(
     navController: NavController,
-    onNavigateHome: () -> Unit
+    onNavigateHome: () -> Unit,
+    onNavigateToRecordAudio: () -> Unit = {}
 ) {
     navigation(
         startDestination = ConsultationRoutes.SUMMARY,
@@ -23,7 +24,8 @@ fun NavGraphBuilder.consultationGraph(
             ConsultationSummaryScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                onNavigateToRecordAudio = onNavigateToRecordAudio
             )
         }
     }

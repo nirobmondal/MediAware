@@ -55,4 +55,16 @@ object DatabaseModule {
     fun provideTestInfoCacheDao(database: MediAwareDatabase): TestInfoCacheDao {
         return database.testInfoCacheDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideConsultationDao(database: MediAwareDatabase): com.example.mediaware.core.database.dao.ConsultationDao {
+        return database.consultationDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideHealthRecordDao(database: MediAwareDatabase): com.example.mediaware.core.database.dao.HealthRecordDao {
+        return database.healthRecordDao()
+    }
 }

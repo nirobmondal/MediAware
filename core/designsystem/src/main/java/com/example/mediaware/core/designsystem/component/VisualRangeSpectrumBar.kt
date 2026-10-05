@@ -184,7 +184,7 @@ fun VisualRangeSpectrumBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "🟢 স্বাভাবিক ($minBn-$maxBn)",
+                text = "স্বাভাবিক ($minBn-$maxBn)",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,
                     color = ClinicalNormal,
@@ -192,7 +192,7 @@ fun VisualRangeSpectrumBar(
                 )
             )
             Text(
-                text = "🟡 সতর্কসীমা ($maxBn-$critBn)",
+                text = "সতর্কসীমা ($maxBn-$critBn)",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,
                     color = ClinicalCaution,
@@ -200,7 +200,7 @@ fun VisualRangeSpectrumBar(
                 )
             )
             Text(
-                text = "🔴 বিপজ্জনক ($critBn+)",
+                text = "বিপজ্জনক ($critBn+)",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,
                     color = ClinicalCritical,

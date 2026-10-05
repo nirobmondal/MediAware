@@ -29,7 +29,7 @@ data class VisitPrepCard(
     val chiefComplaintsSummaryBn: String,
     val doctorSpeakingPointsBn: List<String>,
     val doctorQuestionsBn: List<String>,
-    val mandatoryDisclaimerBn: String = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+    val mandatoryDisclaimerBn: String = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
 )
 
 data class FastingGuideline(

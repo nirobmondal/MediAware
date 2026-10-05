@@ -62,8 +62,7 @@ fun AuthNavHost(
         composable(AuthRoutes.LOGIN) {
             LoginScreen(
                 onNavigateToHome = onAuthenticated,
-                onResetPinClick = {
-                    // Navigate to registration to reset local credentials
+                onNavigateToRegister = {
                     navController.navigate(AuthRoutes.REGISTER)
                 }
             )

@@ -212,7 +212,7 @@ fun ReminderManagerScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "🛡️ অ্যালার্মগুলো AlarmManager এর মাধ্যমে যুক্ত থাকায় ফোন স্লিপ মোডে (Doze Mode) থাকলেও নির্ধারিত সময়ে বাজবে।",
+                            text = "অ্যালার্মগুলো AlarmManager এর মাধ্যমে যুক্ত থাকায় ফোন স্লিপ মোডে (Doze Mode) থাকলেও নির্ধারিত সময়ে বাজবে।",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

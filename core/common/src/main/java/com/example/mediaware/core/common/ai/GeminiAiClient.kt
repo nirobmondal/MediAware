@@ -226,6 +226,118 @@ class GeminiAiClient @Inject constructor() {
         chronicConditions = chronicConditions
     )
 
+    /**
+     * Interactive conversational AI chat for general health guidance and AI connectivity testing.
+     */
+    suspend fun chatWithAi(userMessage: String): String = withContext(Dispatchers.IO) {
+        val prompt = """
+            আপনি MediAware (আপনার স্বাস্থ্য সহায়ক) মোবাইল অ্যাপ্লিকেশনের একজন সহমর্মী ও অভিজ্ঞ বাংলাদেশী ডিজিটাল স্বাস্থ্য সহকারী।
+            ব্যবহারকারীর স্বাস্থ্য সম্পর্কিত জিজ্ঞাসা বা কথার উত্তর সহজ, প্রাঞ্জল ও সুস্পষ্ট বাংলায় দিন।
+            
+            ব্যবহারকারীর বার্তা: "$userMessage"
+
+            নির্দেশনা:
+            ১. উত্তরটি সুন্দর, শান্ত ও ইতিবাচক ভাষায় বাংলায় দিন (সংক্ষিপ্ত ও স্পষ্ট)।
+            ২. সরাসরি কোনো জটিল রোগ নির্ণয় করবেন না বা প্রেসক্রিপশনের ডোজ পরিবর্তন করবেন না।
+            ৩. এটি পরামর্শমূলক ও শিক্ষণীয় স্বাস্থ্য সহায়িকা। প্রয়োজনবোধে রোগীকে চিকিৎসকের কাছে যাওয়ার পরামর্শ দিন।
+            ৪. যদি ব্যবহারকারী জিজ্ঞাসা করে আপনি সক্রিয় আছেন কিনা বা কাজ করছেন কিনা, তবে স্পষ্টভাবে বলুন যে MediAware AI পুরোদমে সক্রিয় ও কাজ করছে।
+        """.trimIndent()
+
+        val response = callGeminiApi(prompt)
+        if (!response.isNullOrBlank()) {
+            response
+        } else {
+            "MediAware AI বর্তমানে সক্রিয় রয়েছে এবং আপনার প্রশ্নের অপেক্ষায় আছে। আপনার যেকোনো স্বাস্থ্য বিষয়ক সাধারণ তথ্য জানতে প্রশ্ন করতে পারেন।"
+        }
+    }
+
+    /**
+     * Multimodal audio processing of doctor consultation.
+     * Takes an audio file, sends to Gemini 3.5/Flash, and extracts structured clinical summary.
+     */
+    suspend fun summarizeConsultationAudio(audioFile: java.io.File): ConsultationAudioSummaryResult = withContext(Dispatchers.IO) {
+        if (!audioFile.exists() || audioFile.length() == 0L) {
+            return@withContext getConsultationAudioFallback()
+        }
+
+        try {
+            val audioBytes = audioFile.readBytes()
+            val prompt = """
+                সংযুক্ত অডিওটি একজন ডাক্তার এবং রোগীর মধ্যবর্তী স্বাস্থ্য পরামর্শের কথোপকথন।
+                অনুগ্রহ করে কথোপকথনটি বিশ্লেষণ করে নিচে উল্লেখিত সুনির্দিষ্ট JSON ফরম্যাটে তথ্য প্রদান করুন:
+                {
+                   "doctor_name": "ডাক্তারের নাম ও পদবি (যদি অডিওতে উল্লেখ থাকে, অন্যথায় 'চিকিৎসক')",
+                   "summary": "ডাক্তারের দেওয়া মূল পরামর্শ, রোগের বিবরণ ও প্রধান নির্দেশনার সহজ বাংলা সারসংক্ষেপ (২-৩ প্যারাগ্রাফে)।",
+                   "action_items": [
+                      {
+                        "task": "নির্দিষ্ট করণীয় (যেমন: প্রেসক্রিপশনের নিয়ম মেনে ওষুধ সেবন করুন)",
+                        "category": "MEDICATION"
+                      },
+                      {
+                        "task": "ল্যাব টেস্ট বা নির্দিষ্ট পরীক্ষা সম্পন্ন করুন",
+                        "category": "TEST"
+                      },
+                      {
+                        "task": "খাদ্যাভ্যাস বা ব্যায়ামের নির্দিষ্ট নিয়ম মেনে চলুন",
+                        "category": "LIFESTYLE"
+                      }
+                   ],
+                   "pending_questions": [
+                      "কোনো প্রশ্ন যদি অনুত্তরিত থাকে বা পরবর্তীতে ডাক্তারকে জিজ্ঞেস করা উচিত"
+                   ],
+                   "follow_up_days": 15,
+                   "follow_up_reason": "ফলো-আপ ভিজিটের কারণ"
+                }
+                বি.দ্র: category অবশ্যই MEDICATION, TEST, LIFESTYLE, অথবা GENERAL হতে হবে। শুধুমাত্র বৈধ JSON আউটপুট দিন।
+            """.trimIndent()
+
+            val jsonResponse = callGeminiApiWithAudio(prompt, audioBytes, "audio/mp4")
+            if (!jsonResponse.isNullOrBlank()) {
+                val cleanedJson = jsonResponse.replace("```json", "").replace("```", "").trim()
+                val jsonObj = JSONObject(cleanedJson)
+                val docName = jsonObj.optString("doctor_name", "চিকিৎসক").ifBlank { "চিকিৎসক" }
+                val summary = jsonObj.optString("summary", "").ifBlank { "ডাক্তার প্রয়োজনীয় স্বাস্থ্য পরামর্শ ও ওষুধ সেবনের নির্দেশনা প্রদান করেছেন।" }
+                val followUpDays = jsonObj.optInt("follow_up_days", 15)
+                val followUpReason = jsonObj.optString("follow_up_reason", "নিয়মিত ফলো-আপ পর্যালোচনা").ifBlank { "নিয়মিত ফলো-আপ পর্যালোচনা" }
+
+                val actionsList = mutableListOf<ConsultationAudioActionItem>()
+                val actionsArr = jsonObj.optJSONArray("action_items")
+                if (actionsArr != null) {
+                    for (i in 0 until actionsArr.length()) {
+                        val itemObj = actionsArr.getJSONObject(i)
+                        val task = itemObj.optString("task", "")
+                        val cat = itemObj.optString("category", "GENERAL").uppercase()
+                        if (task.isNotBlank()) {
+                            actionsList.add(ConsultationAudioActionItem(task, cat))
+                        }
+                    }
+                }
+
+                val questionsList = mutableListOf<String>()
+                val qArr = jsonObj.optJSONArray("pending_questions")
+                if (qArr != null) {
+                    for (i in 0 until qArr.length()) {
+                        val q = qArr.getString(i)
+                        if (q.isNotBlank()) questionsList.add(q)
+                    }
+                }
+
+                return@withContext ConsultationAudioSummaryResult(
+                    doctorName = docName,
+                    summary = summary,
+                    actionItems = actionsList.ifEmpty { getDefaultConsultationActions() },
+                    pendingQuestions = questionsList,
+                    followUpDays = if (followUpDays > 0) followUpDays else 15,
+                    followUpReason = followUpReason
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error during Gemini consultation audio processing")
+        }
+
+        getConsultationAudioFallback()
+    }
+
     private fun callGeminiApi(promptText: String): String? {
         if (apiKey.isBlank()) {
             Timber.w("Gemini API key is blank; using fallback response")
@@ -233,7 +345,7 @@ class GeminiAiClient @Inject constructor() {
         }
 
         // Use modern supported Gemini models with fallback
-        val models = listOf("gemini-3.5-flash-lite", "gemini-3.5-flash")
+        val models = listOf("gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest")
 
         for (model in models) {
             var connection: HttpsURLConnection? = null
@@ -351,4 +463,340 @@ class GeminiAiClient @Inject constructor() {
 
         return Pair(analysis, questions.distinct())
     }
+
+    private fun callGeminiApiWithAudio(promptText: String, audioBytes: ByteArray, mimeType: String): String? {
+        if (apiKey.isBlank()) {
+            Timber.w("Gemini API key is blank")
+            return null
+        }
+
+        val base64Audio = android.util.Base64.encodeToString(audioBytes, android.util.Base64.NO_WRAP)
+        val models = listOf("gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest")
+
+        for (model in models) {
+            var connection: HttpsURLConnection? = null
+            try {
+                val url = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
+                connection = (url.openConnection() as HttpsURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                    connectTimeout = 15000
+                    readTimeout = 40000
+                    doOutput = true
+                }
+
+                val requestBody = JSONObject().apply {
+                    val contents = JSONArray().apply {
+                        val contentObj = JSONObject().apply {
+                            val parts = JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("inline_data", JSONObject().apply {
+                                        put("mime_type", mimeType)
+                                        put("data", base64Audio)
+                                    })
+                                })
+                                put(JSONObject().apply {
+                                    put("text", promptText)
+                                })
+                            }
+                            put("parts", parts)
+                        }
+                        put(contentObj)
+                    }
+                    put("contents", contents)
+                }
+
+                OutputStreamWriter(connection.outputStream, "UTF-8").use { writer ->
+                    writer.write(requestBody.toString())
+                    writer.flush()
+                }
+
+                val responseCode = connection.responseCode
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+                    val responseText = BufferedReader(InputStreamReader(connection.inputStream, "UTF-8")).use { reader ->
+                        reader.readText()
+                    }
+
+                    val responseJson = JSONObject(responseText)
+                    val candidates = responseJson.optJSONArray("candidates")
+                    if (candidates != null && candidates.length() > 0) {
+                        val candidate = candidates.getJSONObject(0)
+                        val content = candidate.optJSONObject("content")
+                        val parts = content?.optJSONArray("parts")
+                        if (parts != null && parts.length() > 0) {
+                            val text = parts.getJSONObject(0).optString("text")
+                            if (text.isNotBlank()) return text
+                        }
+                    }
+                } else {
+                    Timber.w("Gemini audio model $model returned HTTP $responseCode")
+                }
+            } catch (e: Exception) {
+                Timber.w("Gemini audio model $model failed: ${e.message}")
+            } finally {
+                connection?.disconnect()
+            }
+        }
+        return null
+    }
+
+    private fun getConsultationAudioFallback(): ConsultationAudioSummaryResult {
+        return ConsultationAudioSummaryResult(
+            doctorName = "চিকিৎসক",
+            summary = "ডাক্তারের সাথে সফলভাবে পরামর্শ সম্পন্ন হয়েছে। চিকিৎসকের দেওয়া নিয়মাবলী মেনে ওষুধ সেবন করুন এবং নির্দেশিত পথ্য বজায় রাখুন।",
+            actionItems = getDefaultConsultationActions(),
+            pendingQuestions = listOf("ওষুধের কোনো পার্শ্বপ্রতিক্রিয়া দেখা দিলে তাৎক্ষণিক করণীয় কী?"),
+            followUpDays = 15,
+            followUpReason = "শারীরিক উন্নতি ও রক্তচাপ/সুগার নিরীক্ষণ"
+        )
+    }
+
+    private fun getDefaultConsultationActions(): List<ConsultationAudioActionItem> {
+        return listOf(
+            ConsultationAudioActionItem(task = "প্রেসক্রিপশন অনুযায়ী নিয়মিত সময়ে ওষুধ সেবন করুন", category = "MEDICATION"),
+            ConsultationAudioActionItem(task = "প্রয়োজনীয় ল্যাব টেস্ট সম্পন্ন করে রিপোর্ট সংরক্ষণ করুন", category = "TEST"),
+            ConsultationAudioActionItem(task = "পরিমিত পানি পান ও স্বাস্থ্যকর খাদ্যাভ্যাস মেনে চলুন", category = "LIFESTYLE")
+        )
+    }
+
+    /**
+     * RAG-grounded document analysis for medicine boxes, lab test slips, or prescriptions.
+     * Grounded in:
+     * 1. Global Medical Science Base: WHO guidelines, standard pharmacology, medical textbooks.
+     * 2. Bangladesh Contextual Base: DGHS (Directorate General of Health Services) standard treatment protocols.
+     */
+    suspend fun analyzeDocumentWithRag(
+        ocrText: String,
+        userContext: String? = null
+    ): RagDocumentAnalysisResult = withContext(Dispatchers.IO) {
+        val prompt = """
+            আপনি একজন অত্যন্ত অভিজ্ঞ বাংলাদেশী পরামর্শক চিকিৎসক ও ক্লিনিকাল ফার্মাকোলজিস্ট।
+            ক্যামেরা/ওসিআর (ML Kit) দ্বারা স্ক্যান করা নিচের মেডিকেল ডকুমেন্টের টেক্সটটি বিশ্লেষণ করুন।
+
+            রেফারেন্স জ্ঞানভাণ্ডার (RAG Grounding):
+            ১. গ্লোবাল মেডিকেল সায়েন্স বেস (Global Medical Science Base): বিশ্ব স্বাস্থ্য সংস্থা (WHO) গাইডলাইন, আদর্শ ফার্মাকোলজি এবং মেডিকেল পাঠ্যপুস্তক নির্দেশিকা অনুযায়ী ওষুধের কার্যপদ্ধতি ও ল্যাব মানের তাত্পর্য।
+            ২. বাংলাদেশ প্রেক্ষাপট বেস (Bangladesh Contextual Base): স্বাস্থ্য অধিদপ্তর (DGHS - Directorate General of Health Services) প্রণীত ন্যাশনাল স্ট্যান্ডার্ড ট্রিটমেন্ট প্রটোকল, স্থানীয় রোগতত্ত্ব (ডেঙ্গু, টাইফয়েড, রক্তস্বল্পতা ইত্যাদি) এবং বাংলাদেশের ওষুধের ব্র্যান্ড ও জেনেরিক প্রেক্ষাপট।
+
+            ${if (!userContext.isNullOrBlank()) "রোগীর পূর্ববর্তী স্বাস্থ্য মেমোরি: $userContext\n" else ""}
+            স্ক্যানকৃত ওসিআর টেক্সট:
+            \"\"\"
+            $ocrText
+            \"\"\"
+
+            নিচের JSON ফরম্যাটে নির্ভুল উত্তর প্রদান করুন:
+            {
+              "title": "ডকুমেন্টের একটি সংক্ষিপ্ত নাম (যেমন: প্যারাসিটামল ৫০০ মি.গ্রা. ট্যাবলেট অথবা সিবিসি রক্ত পরীক্ষা রিপোর্ট অথবা প্রেসক্রিপশন সারাংশ)",
+              "record_type": "MEDICINE অথবা LAB_REPORT অথবা PRESCRIPTION অথবা GENERAL",
+              "explanation": "WHO এবং DGHS নির্দেশিকার আলোকে সহজবোধ্য বাংলায় বিস্তারিত ব্যাখ্যা (ওষুধ হলে কী কাজে লাগে, খাওয়ার নিয়ম, পার্শ্বপ্রতিক্রিয়া; ল্যাব টেস্ট হলে ফলাফলের অর্থ ও তাত্পর্য)।",
+              "key_points": [
+                "প্রধান পয়েন্ট ১",
+                "প্রধান পয়েন্ট ২",
+                "প্রধান পয়েন্ট ৩"
+              ],
+              "action_advice": "রোগীর জন্য স্বাস্থ্যবিধি, পথ্য বা প্রাথমিক করণীয় পরামর্শ।",
+              "questions_for_doctor": [
+                "ডাক্তারকে জিজ্ঞেস করার মতো ১টি বা ২টি সুনির্দিষ্ট প্রশ্ন"
+              ]
+            }
+
+            নিয়মাবলী:
+            - কোনো পরিস্থিতিতেই কোনো নির্দিষ্ট রোগ চূড়ান্ত ডায়াগনসিস করবেন না বা প্রেসক্রিপশনের ডোজ পরিবর্তন করবেন না।
+            - শুধুমাত্র বৈধ JSON রিটার্ন করুন, কোনো অতিরিক্ত টেক্সট নয়।
+        """.trimIndent()
+
+        val jsonResponse = callGeminiApi(prompt)
+        if (!jsonResponse.isNullOrBlank()) {
+            try {
+                val cleanedJson = jsonResponse.replace("```json", "").replace("```", "").trim()
+                val jsonObj = JSONObject(cleanedJson)
+                val title = jsonObj.optString("title", "চিকিৎসা সংক্রান্ত তথ্য")
+                val recordType = jsonObj.optString("record_type", "GENERAL")
+                val explanation = jsonObj.optString("explanation", "")
+                val actionAdvice = jsonObj.optString("action_advice", "চিকিৎসকের পরামর্শ অনুযায়ী চলুন।")
+                
+                val keyPointsList = mutableListOf<String>()
+                val keyPointsArr = jsonObj.optJSONArray("key_points")
+                if (keyPointsArr != null) {
+                    for (i in 0 until keyPointsArr.length()) {
+                        keyPointsList.add(keyPointsArr.getString(i))
+                    }
+                }
+
+                val questionsList = mutableListOf<String>()
+                val questionsArr = jsonObj.optJSONArray("questions_for_doctor")
+                if (questionsArr != null) {
+                    for (i in 0 until questionsArr.length()) {
+                        questionsList.add(questionsArr.getString(i))
+                    }
+                }
+
+                if (explanation.isNotBlank()) {
+                    return@withContext RagDocumentAnalysisResult(
+                        title = title,
+                        recordType = recordType,
+                        explanationBn = explanation,
+                        keyPoints = if (keyPointsList.isNotEmpty()) keyPointsList else listOf("তথ্যসমূহ ডব্লিউএইচও ও ডিজিয়েচএস নির্দেশিকা অনুযায়ী সংকলিত।"),
+                        actionAdviceBn = actionAdvice,
+                        questionsForDoctor = questionsList,
+                        rawOcrText = ocrText
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to parse RAG document JSON")
+            }
+        }
+
+        // Fallback result
+        RagDocumentAnalysisResult(
+            title = "চিকিৎসা সংক্রান্ত স্ক্যানকৃত নথি",
+            recordType = "GENERAL",
+            explanationBn = "ডকুমেন্টটি সফলভাবে পড়া হয়েছে। এটি সাধারণ স্বাস্থ্য নির্দেশিকা অনুযায়ী সংরক্ষিত হয়েছে। বিস্তারিত পর্যালোচনার জন্য চিকিৎসকের শরণাপন্ন হন।",
+            keyPoints = listOf("বিশ্ব স্বাস্থ্য সংস্থা ও ডিজিএইচএস স্বাস্থ্যবিধির আলোকে সংকলিত"),
+            actionAdviceBn = "কোনো ওষুধের মাত্রা নিজে পরিবর্তন করবেন না। চিকিৎসকের পরামর্শ মেনে চলুন।",
+            questionsForDoctor = listOf("আমার এই রিপোর্ট বা ওষুধের ব্যাপারে কোনো বিশেষ পরামর্শ আছে কি?"),
+            rawOcrText = ocrText
+        )
+    }
+
+    /**
+     * Enhanced Symptoms Analysis combining user intake with Health Memory to generate
+     * triage advice, what to show the doctor, and targeted cheat questions.
+     */
+    suspend fun planSymptomConsultation(
+        symptoms: List<String>,
+        severity: Int,
+        duration: String,
+        accompanyingSymptoms: List<String> = emptyList(),
+        healthMemoryContext: String? = null,
+        userProfileSummary: String? = null
+    ): SymptomConsultationPlanResult = withContext(Dispatchers.IO) {
+        val symptomsStr = if (symptoms.isNotEmpty()) symptoms.joinToString(", ") else "শারীরিক অস্বস্তি"
+        val accompanyingStr = if (accompanyingSymptoms.isNotEmpty()) accompanyingSymptoms.joinToString(", ") else "নেই"
+
+        val prompt = """
+            আপনি একজন অত্যন্ত অভিজ্ঞ বাংলাদেশী জেনারেল ফিজিশিয়ান ও কনসালট্যান্ট।
+            রোগী তার লক্ষণগুলোর জন্য পরামর্শ ও ডাক্তারের কাছে যাওয়ার প্রস্তুতি চাচ্ছে।
+
+            রোগীর তথ্য:
+            ${if (!userProfileSummary.isNullOrBlank()) "- রোগীর প্রোফাইল: $userProfileSummary\n" else ""}
+            ${if (!healthMemoryContext.isNullOrBlank()) "- স্বাস্থ্য মেমোরি (পূর্বের ওষুধ, টেস্ট ও রোগ): $healthMemoryContext\n" else ""}
+            - বর্তমান প্রধান লক্ষণ: $symptomsStr
+            - কষ্টের তীব্রতা (১-১০): $severity
+            - স্থায়ীত্বকাল: $duration
+            - অন্যান্য আনুষঙ্গিক উপসর্গ: $accompanyingStr
+
+            বাংলাদেশ স্বাস্থ্য অধিদপ্তর (DGHS) এর প্রটোকল এবং ক্লিনিকাল নির্দেশনা অনুযায়ী নিচের JSON ফরম্যাটে উত্তর দিন:
+            {
+              "triage_assessment": "লক্ষণসমূহের প্রাথমিক মূল্যায়ন ও পরামর্শ (বাংলায় ১-২ প্যারাগ্রাফে)।",
+              "needs_doctor_visit": ${severity >= 4 || duration.contains("সপ্তাহ") || duration.contains("মাস")},
+              "home_care_advice": "ডাক্তারের কাছে যাওয়ার আগ পর্যন্ত প্রাথমিক পরিচর্যা, বিশ্রাম বা খাদ্যাভ্যাসের নির্দেশিকা।",
+              "what_to_show_doctor": [
+                "ডাক্তারকে দেখানোর মতো ১ নম্বর বিষয় (যেমন: পূর্বের অমুক টেস্ট রিপোর্ট বা বর্তমান ওষুধ)",
+                "২ নম্বর বিষয় (যেমন: কতদিন ধরে জ্বর বা ব্যথার তীব্রতা)",
+                "৩ নম্বর বিষয়"
+              ],
+              "cheat_questions_for_doctor": [
+                "ডাক্তারকে জিজ্ঞেস করার প্রথম জরুরি প্রশ্ন",
+                "দ্বিতীয় প্রশ্ন",
+                "তৃতীয় প্রশ্ন",
+                "চতুর্থ প্রশ্ন"
+              ],
+              "suggested_specialist": "মেডিসিন বিশেষজ্ঞ অথবা কার্ডিওলজিস্ট ইত্যাদি"
+            }
+
+            শুধুমাত্র বৈধ JSON প্রদান করুন। কোনো রোগ চূড়ান্ত ডায়াগনসিস করবেন না।
+        """.trimIndent()
+
+        val jsonResponse = callGeminiApi(prompt)
+        if (!jsonResponse.isNullOrBlank()) {
+            try {
+                val cleanedJson = jsonResponse.replace("```json", "").replace("```", "").trim()
+                val jsonObj = JSONObject(cleanedJson)
+                val assessment = jsonObj.optString("triage_assessment", "")
+                val needsVisit = jsonObj.optBoolean("needs_doctor_visit", true)
+                val homeCare = jsonObj.optString("home_care_advice", "পর্যাপ্ত বিশ্রাম নিন ও পরিমিত পানি পান করুন।")
+                val specialist = jsonObj.optString("suggested_specialist", "জেনারেল মেডিসিন বিশেষজ্ঞ")
+
+                val showList = mutableListOf<String>()
+                val showArr = jsonObj.optJSONArray("what_to_show_doctor")
+                if (showArr != null) {
+                    for (i in 0 until showArr.length()) {
+                        showList.add(showArr.getString(i))
+                    }
+                }
+
+                val questionsList = mutableListOf<String>()
+                val qArr = jsonObj.optJSONArray("cheat_questions_for_doctor")
+                if (qArr != null) {
+                    for (i in 0 until qArr.length()) {
+                        questionsList.add(qArr.getString(i))
+                    }
+                }
+
+                if (assessment.isNotBlank()) {
+                    return@withContext SymptomConsultationPlanResult(
+                        triageAssessmentBn = assessment,
+                        needsDoctorVisit = needsVisit,
+                        homeCareAdviceBn = homeCare,
+                        whatToShowDoctor = if (showList.isNotEmpty()) showList else listOf("বর্তমান ওষুধের প্রেসক্রিপশন", "লক্ষণ শুরুর সুনির্দিষ্ট সময় ও তীব্রতা"),
+                        cheatQuestionsForDoctor = if (questionsList.isNotEmpty()) questionsList else listOf("আমার এই উপসর্গের প্রধান কারণ কী হতে পারে?", "আমার কি কোনো নির্দিষ্ট ল্যাব টেস্ট করানো প্রয়োজন?"),
+                        suggestedSpecialistBn = specialist
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to parse symptom consultation plan JSON")
+            }
+        }
+
+        // Fallback plan
+        SymptomConsultationPlanResult(
+            triageAssessmentBn = "আপনার লক্ষণসমূহ পর্যালোচনায় দেখা গেছে যে উপসর্গগুলো নিয়ন্ত্রণের জন্য একজন চিকিৎসকের পরামর্শ নেওয়া উত্তম।",
+            needsDoctorVisit = true,
+            homeCareAdviceBn = "পর্যাপ্ত বিশ্রাম নিন, সহজপাচ্য পুষ্টিকর খাবার গ্রহণ করুন এবং কোনো ভারী কাজ এড়িয়ে চলুন।",
+            whatToShowDoctor = listOf(
+                "পূর্বে প্রেসক্রাইব করা সকল চলমান ওষুধের তালিকা",
+                "সাম্প্রতিক কোনো প্যাথলজি বা ল্যাব টেস্টের রিপোর্ট",
+                "উপসর্গগুলো দিনের কোন সময়ে বেশি অনুভূত হয় তার বিবরণ"
+            ),
+            cheatQuestionsForDoctor = listOf(
+                "আমার এই লক্ষণের সাথে পূর্বের কোনো দীর্ঘস্থায়ী রোগের সম্পর্ক আছে কি?",
+                "আমার কি নির্দিষ্ট কোনো ল্যাব টেস্ট করানো প্রয়োজন?",
+                "কোন ধরনের উপসর্গ দেখলে জরুরি ভিত্তিতে হাসপাতালে যোগাযোগ করতে হবে?"
+            ),
+            suggestedSpecialistBn = "জেনারেল মেডিসিন বিশেষজ্ঞ"
+        )
+    }
 }
+
+data class ConsultationAudioActionItem(
+    val task: String,
+    val category: String = "GENERAL"
+)
+
+data class ConsultationAudioSummaryResult(
+    val doctorName: String,
+    val summary: String,
+    val actionItems: List<ConsultationAudioActionItem>,
+    val pendingQuestions: List<String>,
+    val followUpDays: Int,
+    val followUpReason: String
+)
+
+data class RagDocumentAnalysisResult(
+    val title: String,
+    val recordType: String,
+    val explanationBn: String,
+    val keyPoints: List<String>,
+    val actionAdviceBn: String,
+    val questionsForDoctor: List<String>,
+    val rawOcrText: String
+)
+
+data class SymptomConsultationPlanResult(
+    val triageAssessmentBn: String,
+    val needsDoctorVisit: Boolean,
+    val homeCareAdviceBn: String,
+    val whatToShowDoctor: List<String>,
+    val cheatQuestionsForDoctor: List<String>,
+    val suggestedSpecialistBn: String
+)

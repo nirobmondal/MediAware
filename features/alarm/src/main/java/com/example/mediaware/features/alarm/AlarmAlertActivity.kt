@@ -341,7 +341,7 @@ fun AlarmAlertScreen(
 
             // Clinical safety disclaimer (Guardrail 3)
             Text(
-                text = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
+                text = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
                 color = white.copy(alpha = 0.55f),
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,

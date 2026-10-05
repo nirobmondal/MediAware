@@ -50,6 +50,7 @@ fun NavGraphBuilder.chamberGraph(
                         is ChamberUiSideEffect.NavigateToQuickRef -> navController.navigate(ChamberRoutes.QUICK_REF)
                         is ChamberUiSideEffect.NavigateToChecklist -> navController.navigate(ChamberRoutes.CHECKLIST)
                         is ChamberUiSideEffect.NavigateToRecorder -> navController.navigate(ChamberRoutes.RECORDER)
+                        is ChamberUiSideEffect.NavigateToSummary -> onNavigateToSummary()
                         is ChamberUiSideEffect.NavigateBack -> navController.popBackStack()
                     }
                 }
@@ -106,6 +107,7 @@ fun NavGraphBuilder.chamberGraph(
                 viewModel.sideEffects.collect { effect ->
                     when (effect) {
                         is ChamberUiSideEffect.ShowToast -> Toast.makeText(context, effect.messageBn, Toast.LENGTH_SHORT).show()
+                        is ChamberUiSideEffect.NavigateToSummary -> onNavigateToSummary()
                         else -> Unit
                     }
                 }

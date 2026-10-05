@@ -109,7 +109,7 @@ fun HealthTimelineScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚠️ এটি কোনো রোগ নির্ণয় নয়। আপনার চিকিৎসকের সাথে চার্ট ও মান পর্যালোচনা করুন।",
+                            text = "এটি কোনো রোগ নির্ণয় নয়। আপনার চিকিৎসকের সাথে চার্ট ও মান পর্যালোচনা করুন।",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFFE65100),

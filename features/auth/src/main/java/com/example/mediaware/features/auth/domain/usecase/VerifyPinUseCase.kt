@@ -9,6 +9,10 @@ class VerifyPinUseCase @Inject constructor(
     private val userRepository: UserRepository
 ) {
     suspend operator fun invoke(enteredPin: String): Resource<Boolean> {
+        if (enteredPin.length != 4) {
+            return Resource.Error("৪ সংখ্যার পিন দিন")
+        }
+
         val credentials = userRepository.getUserCredentials()
             ?: return Resource.Error("কোনো ব্যবহারকারী পাওয়া যায়নি")
 

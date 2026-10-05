@@ -95,7 +95,7 @@ fun OcrVerifyScreen(
                     )
                 ) {
                     Text(
-                        text = if (uiState.labItems.isNotEmpty()) "✅ মান সঠিক আছে, বিশ্লেষণ করুন ➡️" else "কোনো টেস্ট মান নেই (যোগ করুন)",
+                        text = if (uiState.labItems.isNotEmpty()) "মান সঠিক আছে, বিশ্লেষণ করুন" else "কোনো টেস্ট মান নেই (যোগ করুন)",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White

@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Biometric authentication (Phase 1) -->
+    <!-- Biometric authentication -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!-- ─── Hardware & Network Permissions ────────────────────────────── -->
@@ -14,20 +14,8 @@
     <!-- Required for online Gemini AI queries and network status monitoring -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- ─── Phase 10: Alarm System Permissions ──────────────────────────── -->
-    <!-- Required to post full-screen notifications that wake the lock screen -->
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- Required to vibrate device during dose alarm -->
+    <!-- Notification & vibration permissions -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- Required so BootReceiver re-registers alarms after device restart -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Required to keep CPU alive while alarm fires -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Exact alarm scheduling (API 31+) -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
-        tools:ignore="ProtectedPermissions" />
-    <!-- Post local notifications (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -53,50 +41,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- ─── Screen 31: Full-Screen Lock Screen Alarm Activity ──────── -->
-        <!--
-            Launched by AlarmBroadcastReceiver via fullScreenIntent PendingIntent.
-            showWhenLocked / turnScreenOn also set programmatically in onCreate()
-            for API 27+ (setShowWhenLocked / setTurnScreenOn).
-            noHistory = true ensures back-stack is clean after dismissal.
-        -->
-        <activity
-            android:name="com.example.mediaware.features.alarm.AlarmAlertActivity"
-            android:exported="false"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:noHistory="true"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.MediAware" />
-
-        <!-- ─── Full-Screen Alarm BroadcastReceiver ─────────────────────── -->
-        <!--
-            Fires from AlarmManager; posts a PRIORITY_MAX Heads-Up notification
-            with fullScreenIntent → AlarmAlertActivity.
-        -->
-        <receiver
-            android:name="com.example.mediaware.features.alarm.receiver.AlarmBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.example.mediaware.ALARM_TRIGGER_FULLSCREEN" />
-            </intent-filter>
-        </receiver>
-
-        <!-- ─── Boot Recovery BroadcastReceiver ─────────────────────────── -->
-        <!--
-            Listens for device reboot and re-schedules all pending dose alarms.
-            AlarmManager clears all alarms on power-off; this receiver restores them.
-            Requires RECEIVE_BOOT_COMPLETED permission declared above.
-        -->
-        <receiver
-            android:name="com.example.mediaware.features.alarm.receiver.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
 
         <!-- ─── FileProvider for Camera Photo Captures ───────────────── -->
         <provider

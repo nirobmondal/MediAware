@@ -1,15 +1,24 @@
 package com.example.mediaware.features.chamber.presentation.recorder
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -18,17 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mediaware.core.designsystem.theme.PrimaryTeal
-import android.Manifest
-import android.content.pm.PackageManager
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.features.chamber.presentation.ChamberUiEvent
 import com.example.mediaware.features.chamber.presentation.ChamberUiState
 import kotlin.random.Random
@@ -77,7 +81,7 @@ fun ChamberRecorderScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "১৫ মিনিট সর্বোচ্চ স্বয়ংক্রিয় সীমা",
+                            text = "১৫ মিনিট সর্বোচ্চ সীমা ও এআই সারাংশ",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -96,11 +100,12 @@ fun ChamberRecorderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Section: Consent confirmation & 14-min warning
+            // Top Section: Guidelines, Consent & Warnings
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -122,7 +127,7 @@ fun ChamberRecorderScreen(
                             Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFC62828))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "⚠️ ১৪ মিনিট অতিক্রান্ত! আর ১ মিনিট পর রেকর্ডিং স্বয়ংক্রিয়ভাবে সংরক্ষিত হবে।",
+                                text = "১৪ মিনিট অতিক্রান্ত! আর ১ মিনিট পর রেকর্ডিং স্বয়ংক্রিয়ভাবে সংরক্ষিত হবে।",
                                 color = Color(0xFFC62828),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -132,7 +137,45 @@ fun ChamberRecorderScreen(
                     }
                 }
 
-                // Consent Card
+                // Doctor Consultation Guidelines Card (shown when not recording)
+                if (!uiState.isRecording) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = PrimaryTeal.copy(alpha = 0.06f)),
+                        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.25f))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = PrimaryTeal,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "ডাক্তার পরামর্শ অডিও রেকর্ড নির্দেশিকা",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryTeal
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("১. চিকিৎসকের অনুমতি: রেকর্ডিং শুরুর পূর্বে ডাক্তার সাহেবের মৌখিক সম্মতি নিন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text("২. অবস্থান: ফোনটি টেবিলের ওপর রাখুন যাতে উভয় কণ্ঠ স্পষ্ট শোনা যায়।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text("৩. পরিচ্ছন্ন শব্দ: অতিরিক্ত শোরগোল এড়িয়ে শান্ত পরিবেশ বজায় রাখুন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text("৪. এআই সারসংক্ষেপ: সমাপ্তিতে জেমিনি এআই করণীয় তালিকা ও ফলো-আপ তৈরি করবে।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+
+                // Doctor Consent Switch Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -178,6 +221,8 @@ fun ChamberRecorderScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Middle Section: Visualizer & Timer
             Column(
@@ -246,6 +291,8 @@ fun ChamberRecorderScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Bottom Section: Record/Stop Button & Security Notice
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -285,7 +332,7 @@ fun ChamberRecorderScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = if (uiState.isRecording) "রেকর্ডিং থামাতে চাপ দিন" else if (uiState.hasDoctorConsent) "রেকর্ডিং শুরু করতে চাপ দিন" else "অনুমতি নিশ্চিত করে রেকর্ড শুরু করুন",
+                    text = if (uiState.isRecording) "রেকর্ডিং সমাপ্ত ও এআই সারাংশ তৈরি করুন" else if (uiState.hasDoctorConsent) "রেকর্ডিং শুরু করতে চাপ দিন" else "অনুমতি নিশ্চিত করে রেকর্ড শুরু করুন",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -293,11 +340,59 @@ fun ChamberRecorderScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "🔒 অডিও ফাইলটি আপনার ডিভাইসের সুরক্ষিত মেমরিতে (filesDir/vault/) সংরক্ষিত হয়।",
+                    text = "অডিও ফাইলটি আপনার ডিভাইসের সুরক্ষিত মেমরিতে (filesDir/vault/) এনক্রিপ্টেড থাকে।",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
+        }
+
+        // AI Summarizing Dialog
+        if (uiState.isSummarizing) {
+            AlertDialog(
+                onDismissRequest = { /* Non-dismissible while processing */ },
+                confirmButton = {},
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .background(PrimaryTeal.copy(alpha = 0.15f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryTeal,
+                            modifier = Modifier.size(28.dp),
+                            strokeWidth = 3.dp
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = "এআই সারাংশ প্রস্তুত হচ্ছে...",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "জেমিনি এআই আপনার কথোপকথন বিশ্লেষণ করে চিকিৎসকের পরামর্শের সারসংক্ষেপ, ওষুধ নির্দেশিকা ও করণীয় কর্মপরিকল্পনা প্রস্তুত করছে।",
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন...",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PrimaryTeal
+                        )
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }

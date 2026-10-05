@@ -219,7 +219,7 @@ fun EmergencyAlertScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "👨‍👩‍👧 স্বজনকে জরুরি বার্তা পাঠান",
+                        text = "স্বজনকে জরুরি বার্তা পাঠান",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White

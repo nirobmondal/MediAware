@@ -130,7 +130,7 @@ fun SplashScreen(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = "🔒 আপনার স্বাস্থ্য তথ্য সম্পূর্ণ সুরক্ষিত",
+                text = "আপনার স্বাস্থ্য তথ্য সম্পূর্ণ সুরক্ষিত",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 12.sp,
                     color = Color(0xFFD5F5F5)

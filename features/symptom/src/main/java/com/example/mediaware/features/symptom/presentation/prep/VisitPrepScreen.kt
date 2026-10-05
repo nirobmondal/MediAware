@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -120,7 +121,7 @@ fun VisitPrepScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = card?.mandatoryDisclaimerBn ?: "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
+                            text = card?.mandatoryDisclaimerBn ?: "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color(0xFFE65100),
                                 fontWeight = FontWeight.Bold
@@ -297,9 +298,85 @@ fun VisitPrepScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                    // Saved to Health Memory Status Pill
+                    if (uiState.isSavedToHealthMemory) {
+                        Surface(
+                            color = PrimaryTeal.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BookmarkAdded,
+                                    contentDescription = null,
+                                    tint = PrimaryTeal,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "এই প্রস্তুতি পরিকল্পনা আপনার স্বাস্থ্য মেমোরিতে সংরক্ষিত হয়েছে।",
+                                    fontSize = 11.sp,
+                                    color = PrimaryTeal,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
 
-                    // Targeted AI Doctor Cheat Questions
+                    // What to Show Doctor Card (ডাক্তারকে যা দেখাতে হবে)
+                    val showItems = uiState.whatToShowDoctor
+                    if (showItems.isNotEmpty()) {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.2.dp, Color(0xFF80CBC4)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.FolderShared,
+                                        contentDescription = null,
+                                        tint = PrimaryTeal
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "ডাক্তারকে যা যা দেখাতে হবে",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrimaryTeal
+                                        )
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+                                showItems.forEach { item ->
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = "•",
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrimaryTeal,
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
+                                        Text(
+                                            text = item,
+                                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Targeted AI Doctor Cheat Questions (চিট-প্রশ্নাবলী)
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -328,7 +405,7 @@ fun VisitPrepScreen(
                                     Text(
                                         text = "•",
                                         fontWeight = FontWeight.Bold,
-                                        color = PrimaryTeal,
+                                        color = Color(0xFF2B5B84),
                                         modifier = Modifier.padding(end = 8.dp)
                                     )
                                     Text(
@@ -352,13 +429,20 @@ fun VisitPrepScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
                     ) {
                         Icon(Icons.Default.Science, contentDescription = null)
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "ল্যাব টেস্ট প্রস্তুতি নির্দেশিকা দেখুন ➡️",
+                            text = "ল্যাব টেস্ট প্রস্তুতি নির্দেশিকা দেখুন",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 

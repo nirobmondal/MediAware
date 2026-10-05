@@ -22,7 +22,7 @@ class GetMedicineInfoUseCase @Inject constructor(
                 if (data != null) {
                     Resource.Success(
                         data = data.copy(
-                            mandatoryDisclaimerBn = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+                            mandatoryDisclaimerBn = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
                         ),
                         isFromCache = result.isFromCache
                     )

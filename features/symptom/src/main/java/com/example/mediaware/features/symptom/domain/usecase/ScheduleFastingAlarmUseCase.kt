@@ -34,7 +34,7 @@ class ScheduleFastingAlarmUseCase @Inject constructor(
                 calendar.timeInMillis
             }
 
-            val alertMessage = "⚠️ $testNameBn টেস্টের প্রস্তুতি: টেস্টের আগে পানি ব্যতীত অন্য কোনো খাবার বা চা-কফি গ্রহণ করবেন না।"
+            val alertMessage = "$testNameBn টেস্টের প্রস্তুতি: টেস্টের আগে পানি ব্যতীত অন্য কোনো খাবার বা চা-কফি গ্রহণ করবেন না।"
 
             val success = fastingAlarmScheduler.scheduleFastingAlarm(
                 testNameBn = testNameBn,

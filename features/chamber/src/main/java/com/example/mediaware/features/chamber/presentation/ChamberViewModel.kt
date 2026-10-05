@@ -8,7 +8,11 @@ import com.example.mediaware.features.chamber.domain.model.DoctorQuestionItem
 import com.example.mediaware.features.chamber.domain.model.LabSummaryItem
 import com.example.mediaware.features.chamber.domain.model.PatientPresentationSummary
 import com.example.mediaware.core.common.ai.GeminiAiClient
+import com.example.mediaware.core.database.dao.ConsultationDao
+import com.example.mediaware.core.database.dao.HealthRecordDao
 import com.example.mediaware.core.database.dao.UserProfileDao
+import com.example.mediaware.core.database.entity.ConsultationEntity
+import com.example.mediaware.core.database.entity.HealthRecordEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -20,8 +24,14 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
+import timber.log.Timber
 
 data class ChamberUiState(
     val patientSummary: PatientPresentationSummary = createDefaultPatientSummary(),
@@ -33,7 +43,9 @@ data class ChamberUiState(
     val recordedAudioFile: File? = null,
     val is14MinWarningActive: Boolean = false,
     val isTouchLocked: Boolean = false,
-    val isRingerMuted: Boolean = false
+    val isRingerMuted: Boolean = false,
+    val isSummarizing: Boolean = false,
+    val summarizingMessage: String = ""
 ) {
     val discussedCount: Int
         get() = questions.count { it.isDiscussed }
@@ -70,6 +82,7 @@ sealed interface ChamberUiSideEffect {
     data object NavigateToQuickRef : ChamberUiSideEffect
     data object NavigateToChecklist : ChamberUiSideEffect
     data object NavigateToRecorder : ChamberUiSideEffect
+    data object NavigateToSummary : ChamberUiSideEffect
     data object NavigateBack : ChamberUiSideEffect
 }
 
@@ -77,6 +90,8 @@ sealed interface ChamberUiSideEffect {
 class ChamberViewModel @Inject constructor(
     private val audioRecorder: ConsultationAudioRecorder,
     private val userProfileDao: UserProfileDao,
+    private val consultationDao: ConsultationDao,
+    private val healthRecordDao: HealthRecordDao,
     private val geminiAiClient: GeminiAiClient
 ) : ViewModel() {
 
@@ -264,13 +279,90 @@ class ChamberViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch {
-            val msg = if (timedOut) {
-                "১৫ মিনিটের সীমা উত্তীর্ণ হওয়ায় রেকর্ডিং সফলভাবে সংরক্ষিত হয়েছে।"
-            } else {
-                "পরামর্শ রেকর্ডিং সফলভাবে ভল্টে সংরক্ষিত হয়েছে।"
+        if (file != null && file.exists() && file.length() > 0) {
+            _uiState.update {
+                it.copy(
+                    isSummarizing = true,
+                    summarizingMessage = "এআই দিয়ে ডাক্তারের পরামর্শ বিশ্লেষণ ও কর্মপরিকল্পনা তৈরি হচ্ছে..."
+                )
             }
-            _sideEffects.send(ChamberUiSideEffect.ShowToast(msg))
+
+            viewModelScope.launch {
+                try {
+                    val summaryResult = geminiAiClient.summarizeConsultationAudio(file)
+
+                    val now = System.currentTimeMillis()
+                    val dateFormat = SimpleDateFormat("dd MMMM yyyy, hh:mm a", Locale.getDefault())
+                    val dateStrBn = dateFormat.format(Date(now)).toBengaliDigits()
+
+                    val actionItemsJson = JSONArray().apply {
+                        summaryResult.actionItems.forEachIndexed { idx, it ->
+                            put(JSONObject().apply {
+                                put("id", "act_${now}_$idx")
+                                put("task", it.task)
+                                put("category", it.category)
+                                put("isCompleted", false)
+                            })
+                        }
+                    }.toString()
+
+                    val questionsJson = JSONArray(summaryResult.pendingQuestions).toString()
+                    val followUpDateStrBn = "${summaryResult.followUpDays.toString().toBengaliDigits()} দিন পর"
+
+                    val entity = ConsultationEntity(
+                        id = "consultation_${now}",
+                        timestamp = now,
+                        dateFormattedBn = dateStrBn,
+                        doctorName = summaryResult.doctorName,
+                        summaryBn = summaryResult.summary,
+                        actionItemsJson = actionItemsJson,
+                        pendingQuestionsJson = questionsJson,
+                        followUpDays = summaryResult.followUpDays,
+                        followUpDateStringBn = followUpDateStrBn,
+                        followUpReasonBn = summaryResult.followUpReason,
+                        audioFilePath = file.absolutePath
+                    )
+
+                    consultationDao.insertConsultation(entity)
+
+                    // Also synchronize into unified Health Memory
+                    try {
+                        val hrEntity = HealthRecordEntity(
+                            id = "hr_consultation_${now}",
+                            timestamp = now,
+                            dateFormattedBn = dateStrBn,
+                            recordType = "CONSULTATION",
+                            title = "ডাক্তার পরামর্শ: ${summaryResult.doctorName}",
+                            summaryBn = summaryResult.summary,
+                            detailsJson = JSONObject().apply {
+                                put("followUpDays", summaryResult.followUpDays)
+                                put("followUpReason", summaryResult.followUpReason)
+                            }.toString(),
+                            sourceGrounding = "ডাক্তারের সরাসরি পরামর্শ (অডিও সারাংশ)"
+                        )
+                        healthRecordDao.insertRecord(hrEntity)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to insert consultation into health memory")
+                    }
+
+                    _uiState.update { it.copy(isSummarizing = false) }
+                    _sideEffects.send(ChamberUiSideEffect.ShowToast("পরামর্শের সারাংশ সফলভাবে তৈরি ও সংরক্ষিত হয়েছে!"))
+                    _sideEffects.send(ChamberUiSideEffect.NavigateToSummary)
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(isSummarizing = false) }
+                    _sideEffects.send(ChamberUiSideEffect.ShowToast("সারাংশ তৈরি সম্পন্ন হয়েছে।"))
+                    _sideEffects.send(ChamberUiSideEffect.NavigateToSummary)
+                }
+            }
+        } else {
+            viewModelScope.launch {
+                val msg = if (timedOut) {
+                    "১৫ মিনিটের সীমা উত্তীর্ণ হওয়ায় রেকর্ডিং সফলভাবে সংরক্ষিত হয়েছে।"
+                } else {
+                    "পরামর্শ রেকর্ডিং সফলভাবে ভল্টে সংরক্ষিত হয়েছে।"
+                }
+                _sideEffects.send(ChamberUiSideEffect.ShowToast(msg))
+            }
         }
     }
 

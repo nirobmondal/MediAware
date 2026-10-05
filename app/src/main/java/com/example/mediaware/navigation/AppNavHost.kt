@@ -125,6 +125,9 @@ fun AppNavHost(
                 navController.navigate("home") {
                     popUpTo("home") { inclusive = false }
                 }
+            },
+            onNavigateToRecordAudio = {
+                navController.navigate(ChamberRoutes.RECORDER)
             }
         )
         historyGraph(

@@ -9,6 +9,10 @@ data class VisitPrepUiState(
     val visitCard: VisitPrepCard? = null,
     val aiSymptomAnalysisBn: String? = null,
     val aiCheatQuestions: List<String> = emptyList(),
+    val whatToShowDoctor: List<String> = emptyList(),
+    val homeCareAdviceBn: String? = null,
+    val needsDoctorVisit: Boolean = true,
+    val isSavedToHealthMemory: Boolean = false,
     val isAiAnalyzing: Boolean = false,
     val isLoading: Boolean = true,
     val isPlayingTts: Boolean = false

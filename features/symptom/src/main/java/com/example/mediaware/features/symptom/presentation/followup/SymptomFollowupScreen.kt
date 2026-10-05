@@ -84,7 +84,7 @@ fun SymptomFollowupScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
                 ) {
                     Text(
-                        text = "যাচাই করুন ও এগিয়ে যান ➡️",
+                        text = "যাচাই করুন ও এগিয়ে যান",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White

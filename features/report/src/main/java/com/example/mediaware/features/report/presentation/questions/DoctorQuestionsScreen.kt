@@ -147,7 +147,7 @@ fun DoctorQuestionsScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
+                                text = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = Color(0xFFE65100),
                                     fontWeight = FontWeight.Bold

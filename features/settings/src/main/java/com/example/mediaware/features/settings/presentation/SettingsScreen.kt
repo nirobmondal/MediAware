@@ -2,6 +2,9 @@ package com.example.mediaware.features.settings.presentation
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -24,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
@@ -37,6 +43,66 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(key1 = true) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is SettingsSideEffect.ShowToast -> {
+                    Toast.makeText(context, effect.messageBn, Toast.LENGTH_SHORT).show()
+                }
+                SettingsSideEffect.NavigateBack -> onNavigateBack()
+            }
+        }
+    }
+
+    val promptBiometricEnrollment = {
+        val activity = context as? FragmentActivity
+        if (activity != null) {
+            val biometricManager = BiometricManager.from(context)
+            val canAuthenticate = biometricManager.canAuthenticate(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+            )
+
+            if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+                Toast.makeText(
+                    context,
+                    "আপনার ফোনে কোনো ফিঙ্গারপ্রিন্ট যোগ করা নেই। ফোন সেটিংস থেকে ফিঙ্গারপ্রিন্ট সেট করুন।",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                val executor = ContextCompat.getMainExecutor(context)
+                val biometricPrompt = BiometricPrompt(
+                    activity,
+                    executor,
+                    object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            super.onAuthenticationSucceeded(result)
+                            viewModel.onEvent(SettingsUiEvent.OnToggleBiometric(true))
+                            Toast.makeText(context, "বায়োমেট্রিক ফিঙ্গারপ্রিন্ট সফলভাবে সক্রিয় হয়েছে!", Toast.LENGTH_SHORT).show()
+                        }
+
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                            super.onAuthenticationError(errorCode, errString)
+                            if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                                Toast.makeText(context, "ফিঙ্গারপ্রিন্ট নিশ্চিতকরণ ব্যর্থ: $errString", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                )
+
+                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("ফিঙ্গারপ্রিন্ট সংরক্ষণ ও সক্রিয়করণ")
+                    .setSubtitle("লগইনের জন্য আপনার আঙুলের ছাপ নিশ্চিত করুন")
+                    .setNegativeButtonText("বাতিল")
+                    .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                    .build()
+
+                biometricPrompt.authenticate(promptInfo)
+            }
+        } else {
+            viewModel.onEvent(SettingsUiEvent.OnToggleBiometric(true))
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -149,7 +215,14 @@ fun SettingsScreen(
                         }
                         Switch(
                             checked = uiState.isBiometricEnabled,
-                            onCheckedChange = { viewModel.onEvent(SettingsUiEvent.OnToggleBiometric(it)) }
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    promptBiometricEnrollment()
+                                } else {
+                                    viewModel.onEvent(SettingsUiEvent.OnToggleBiometric(false))
+                                    Toast.makeText(context, "বায়োমেট্রিক ফিঙ্গারপ্রিন্ট নিষ্ক্রিয় করা হয়েছে", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         )
                     }
 
@@ -163,46 +236,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text("পিন নিরাপত্তা কোড", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("৫-সংখ্যার পাসওয়ার্ড দিয়ে এনক্রিপ্টেড", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // ─── Section 2: ওষুধ রিমাইন্ডার ও নোটিফিকেশন ────────────────────
-            SettingsSectionHeader(title = "ওষুধ অ্যালার্ম ও সতর্কতা")
-
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Alarm, contentDescription = null, tint = PrimaryTeal)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("লক স্ক্রিন ফুল-স্ক্রিন অ্যালার্ম", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("স্ক্রিন লক থাকলেও সঠিক সময়ে পূর্ণ পর্দা জুড়ে অ্যালার্ম বাজবে", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = null, tint = PrimaryTeal)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("উচ্চ অগ্রাধিকার সাউন্ড ও ভাইব্রেশন", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("সাইলেন্ট মোড বাইপাস সক্রিয়", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("৪-সংখ্যার পাসওয়ার্ড দিয়ে এনক্রিপ্টেড", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }

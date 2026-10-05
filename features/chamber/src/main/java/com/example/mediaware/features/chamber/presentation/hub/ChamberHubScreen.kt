@@ -143,7 +143,7 @@ fun ChamberHubScreen(
                     icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "ডাক্তার প্রেজেন্টেশন কার্ড",
                     subtitle = "ডাক্তারকে আপনার সাম্প্রতিক সুগার, রক্তচাপ ও লক্ষণসমূহ একনজরে দেখান।",
-                    badgeText = "💡 ওয়েক-লক ও টাচ-লক",
+                    badgeText = "ওয়েক-লক ও টাচ-লক",
                     onClick = onNavigateToQuickRef
                 )
             }
@@ -164,8 +164,8 @@ fun ChamberHubScreen(
                 ChamberActionCard(
                     icon = Icons.Default.Mic,
                     title = "পরামর্শ অডিও রেকর্ডার",
-                    subtitle = "ডাক্তারের মৌখিক অনুমতি সাপেক্ষে পরামর্শ রেকর্ড করুন।",
-                    badgeText = "⏱️ ১৫ মিনিট সর্বোচ্চ সীমা",
+                    subtitle = "ডাক্তারের অনুমতি নিয়ে পরামর্শ রেকর্ড করুন। জেমিনি এআই স্বয়ংক্রিয়ভাবে সারসংক্ষেপ তৈরি করবে।",
+                    badgeText = "এআই সারাংশ",
                     onClick = onNavigateToRecorder
                 )
             }
@@ -176,7 +176,7 @@ fun ChamberHubScreen(
                     icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "ভিজিট সারাংশ ও কর্মপরিকল্পনা",
                     subtitle = "পরামর্শের মূল নির্দেশনা, করণীয় তালিকা ও পরবর্তী ফলো-আপ রিমাইন্ডার।",
-                    badgeText = "📝 সারাংশ ও ক্যালেন্ডার",
+                    badgeText = "সারাংশ ও ক্যালেন্ডার",
                     onClick = onNavigateToSummary
                 )
             }
@@ -199,7 +199,7 @@ fun ChamberHubScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "🔒 চেম্বার মোডের সকল তথ্য ও অডিও আপনার ডিভাইসের সুরক্ষিত ভল্টে এনক্রিপ্টেড থাকে।",
+                            text = "চেম্বার মোডের সকল তথ্য ও অডিও আপনার ডিভাইসের সুরক্ষিত ভল্টে এনক্রিপ্টেড থাকে।",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

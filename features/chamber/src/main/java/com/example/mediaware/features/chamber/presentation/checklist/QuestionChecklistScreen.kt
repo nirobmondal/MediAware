@@ -85,7 +85,7 @@ fun QuestionChecklistScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "আলোচনা সম্পন্ন (ফিরে যান) ➡️",
+                            text = "আলোচনা সম্পন্ন (ফিরে যান)",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )

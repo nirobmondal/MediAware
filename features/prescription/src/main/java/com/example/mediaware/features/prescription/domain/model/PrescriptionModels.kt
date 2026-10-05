@@ -29,7 +29,7 @@ data class MedicineExplanation(
     val criticalWarningsBn: String,
     val lifestylePrecautionsBn: String? = null,
     val isFromCache: Boolean = false,
-    val mandatoryDisclaimerBn: String = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+    val mandatoryDisclaimerBn: String = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
 )
 
 enum class DoseSlot(val labelBn: String, val defaultHour: Int, val defaultMinute: Int, val defaultTimeBn: String) {

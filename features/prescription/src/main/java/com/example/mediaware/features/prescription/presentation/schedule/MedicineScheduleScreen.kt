@@ -125,7 +125,7 @@ fun MedicineScheduleScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "🛡️ স্লিপ মোডেও (Doze Mode) অ্যালার্ম বাজবে",
+                                text = "স্লিপ মোডেও (Doze Mode) অ্যালার্ম বাজবে",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = PrimaryTeal
@@ -265,9 +265,9 @@ fun SlotScheduleCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val slotIcon = when (schedule.slot) {
-                        DoseSlot.MORNING -> "🌅"
-                        DoseSlot.NOON -> "☀️"
-                        DoseSlot.NIGHT -> "🌙"
+                        DoseSlot.MORNING -> Icons.Default.WbSunny
+                        DoseSlot.NOON -> Icons.Default.LightMode
+                        DoseSlot.NIGHT -> Icons.Default.Bedtime
                     }
                     Box(
                         modifier = Modifier
@@ -275,7 +275,12 @@ fun SlotScheduleCard(
                             .background(PrimaryTeal.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(slotIcon, fontSize = 20.sp)
+                        Icon(
+                            imageVector = slotIcon,
+                            contentDescription = null,
+                            tint = PrimaryTeal,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {

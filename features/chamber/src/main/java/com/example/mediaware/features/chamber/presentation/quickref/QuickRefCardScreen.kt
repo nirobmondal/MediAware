@@ -57,13 +57,13 @@ fun QuickRefCardScreen(
                     title = {
                         Column {
                             Text(
-                                text = "📋 রোগী সামারি (ডাক্তারকে দেখান)",
+                                text = "রোগী সামারি (ডাক্তারকে দেখান)",
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF191C1C)
                             )
                             Text(
-                                text = "💡 স্ক্রিন উজ্জ্বলতা ও ওয়েক-লক চালু আছে",
+                                text = "স্ক্রিন উজ্জ্বলতা ও ওয়েক-লক চালু আছে",
                                 fontSize = 11.sp,
                                 color = PrimaryTeal,
                                 fontWeight = FontWeight.Medium
@@ -202,7 +202,7 @@ fun QuickRefCardScreen(
                         Icon(Icons.Default.Lock, contentDescription = null, tint = PrimaryTeal)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "🔒 ডাক্তারকে দেওয়ার আগে স্ক্রিন লক করুন",
+                            text = "ডাক্তারকে দেওয়ার আগে স্ক্রিন লক করুন",
                             color = PrimaryTeal,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold

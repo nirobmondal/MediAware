@@ -95,7 +95,7 @@ fun SymptomSelectScreen(
                     val countText = uiState.selectedSymptomIds.size.toString().toBengaliDigits()
                     Text(
                         text = if (uiState.selectedSymptomIds.isNotEmpty()) {
-                            "পরবর্তী ধাপ ➡️ ($countText টি বাছাইকৃত)"
+                            "পরবর্তী ধাপ ($countText টি বাছাইকৃত)"
                         } else {
                             "কমপক্ষে একটি লক্ষণ নির্বাচন করুন"
                         },
@@ -159,7 +159,7 @@ fun SymptomSelectScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (uiState.isListeningVoice) "🎙️ শুনছি... বলুন কি সমস্যা হচ্ছে (ট্যাপ করে বন্ধ করুন)" else "🎙️ মুখে বলে লক্ষণ যোগ করুন (ট্যাপ করুন)",
+                        text = if (uiState.isListeningVoice) "শুনছি... বলুন কি সমস্যা হচ্ছে (ট্যাপ করে বন্ধ করুন)" else "মুখে বলে লক্ষণ যোগ করুন (ট্যাপ করুন)",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = if (uiState.isListeningVoice) Color(0xFFBA1A1A) else PrimaryTeal,
                             fontWeight = FontWeight.Medium

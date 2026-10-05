@@ -42,7 +42,7 @@ class AnalyzeLabReportUseCase @Inject constructor() {
             criticalCount = criticalCount,
             borderlineCount = borderlineCount,
             normalCount = normalCount,
-            mandatoryDisclaimerBn = "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
+            mandatoryDisclaimerBn = "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।"
         )
     }
 

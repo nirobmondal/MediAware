@@ -4,9 +4,13 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.mediaware.core.database.converter.StringListConverter
+import com.example.mediaware.core.database.dao.ConsultationDao
+import com.example.mediaware.core.database.dao.HealthRecordDao
 import com.example.mediaware.core.database.dao.MedicineCacheDao
 import com.example.mediaware.core.database.dao.TestInfoCacheDao
 import com.example.mediaware.core.database.dao.UserProfileDao
+import com.example.mediaware.core.database.entity.ConsultationEntity
+import com.example.mediaware.core.database.entity.HealthRecordEntity
 import com.example.mediaware.core.database.entity.MedicineCacheEntity
 import com.example.mediaware.core.database.entity.TestInfoCacheEntity
 import com.example.mediaware.core.database.entity.UserProfileEntity
@@ -15,9 +19,11 @@ import com.example.mediaware.core.database.entity.UserProfileEntity
     entities = [
         UserProfileEntity::class,
         MedicineCacheEntity::class,
-        TestInfoCacheEntity::class
+        TestInfoCacheEntity::class,
+        ConsultationEntity::class,
+        HealthRecordEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(StringListConverter::class)
@@ -25,6 +31,8 @@ abstract class MediAwareDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun medicineCacheDao(): MedicineCacheDao
     abstract fun testInfoCacheDao(): TestInfoCacheDao
+    abstract fun consultationDao(): ConsultationDao
+    abstract fun healthRecordDao(): HealthRecordDao
 
     companion object {
         const val DATABASE_NAME = "mediaware_db"

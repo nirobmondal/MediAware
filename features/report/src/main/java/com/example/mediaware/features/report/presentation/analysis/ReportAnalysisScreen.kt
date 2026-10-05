@@ -106,7 +106,7 @@ fun ReportAnalysisScreen(
                     Icon(Icons.Default.QuestionAnswer, contentDescription = null)
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "📋 ডাক্তারের জন্য প্রশ্নাবলী দেখুন ➡️",
+                        text = "ডাক্তারের জন্য প্রশ্নাবলী দেখুন",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -156,7 +156,7 @@ fun ReportAnalysisScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = analysis?.mandatoryDisclaimerBn ?: "⚠️ এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
+                                text = analysis?.mandatoryDisclaimerBn ?: "এটি কোনো প্রেসক্রিপশন নয়। যেকোনো সিদ্ধান্তে ডাক্তারের পরামর্শ নিন।",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = Color(0xFFE65100),
                                     fontWeight = FontWeight.Bold
