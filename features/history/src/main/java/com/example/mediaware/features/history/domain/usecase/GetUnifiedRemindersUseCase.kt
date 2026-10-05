@@ -14,54 +14,7 @@ data class UnifiedRemindersResult(
 class GetUnifiedRemindersUseCase @Inject constructor() {
 
     operator fun invoke(): UnifiedRemindersResult {
-        val reminders = listOf(
-            UnifiedReminder(
-                id = "rem_1",
-                title = "সেক্লো ২০ মি.গ্রা.",
-                subtitle = "খাবারের ৩০ মিনিট পূর্বে সেব্য",
-                type = ReminderType.MEDICINE,
-                timeOfDayMinutes = 8 * 60, // 08:00 AM (480 mins)
-                timeFormattedBn = "সকাল ০৮:০০",
-                isEnabled = true
-            ),
-            UnifiedReminder(
-                id = "rem_2",
-                title = "ল্যাব টেস্ট ফাস্টিং শুরু",
-                subtitle = "রক্তে সুগার ও লিপিড প্রোফাইল টেস্টের জন্য ৮ ঘণ্টা ফাস্টিং",
-                type = ReminderType.LAB_TEST,
-                timeOfDayMinutes = 8 * 60 + 5, // 08:05 AM (485 mins) - CONFLICT with rem_1 (<10 mins)!
-                timeFormattedBn = "সকাল ০৮:০৫",
-                isEnabled = true
-            ),
-            UnifiedReminder(
-                id = "rem_3",
-                title = "কমেট ৫০০ মি.গ্রা.",
-                subtitle = "দুপুরের খাবার পর সেব্য",
-                type = ReminderType.MEDICINE,
-                timeOfDayMinutes = 13 * 60 + 30, // 01:30 PM (810 mins)
-                timeFormattedBn = "দুপুর ০১:৩০",
-                isEnabled = true
-            ),
-            UnifiedReminder(
-                id = "rem_4",
-                title = "কমেট ৫০০ মি.গ্রা.",
-                subtitle = "রাতের খাবার পর সেব্য",
-                type = ReminderType.MEDICINE,
-                timeOfDayMinutes = 20 * 60 + 30, // 08:30 PM (1230 mins)
-                timeFormattedBn = "রাত ০৮:৩০",
-                isEnabled = true
-            ),
-            UnifiedReminder(
-                id = "rem_5",
-                title = "ডাঃ প্রফেসর এ. কে. আজাদ চেম্বার ফলো-আপ",
-                subtitle = "৩ মাস পর ডায়াবেটিস ও রক্তচাপ পর্যালোচনা ভিজিট",
-                type = ReminderType.CONSULTATION,
-                timeOfDayMinutes = 10 * 60, // 10:00 AM
-                timeFormattedBn = "সকাল ১০:০০ (৩ মাস পর)",
-                isEnabled = true
-            )
-        )
-
+        val reminders = emptyList<UnifiedReminder>()
         val conflicts = detectConflicts(reminders.filter { it.isEnabled })
 
         return UnifiedRemindersResult(

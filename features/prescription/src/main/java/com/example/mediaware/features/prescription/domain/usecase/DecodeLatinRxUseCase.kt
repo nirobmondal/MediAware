@@ -47,11 +47,6 @@ class DecodeLatinRxUseCase @Inject constructor() {
             }
         }
 
-        // If no structured items were detected from raw text, provide a fallback detected sample item
-        if (items.isEmpty()) {
-            items.addAll(getDemoPrescriptionItems())
-        }
-
         return items
     }
 
@@ -118,57 +113,6 @@ class DecodeLatinRxUseCase @Inject constructor() {
             nightQty = instruction.nightQty,
             timingSlotBn = instruction.timingSlotBn,
             mealInstructionBn = instruction.mealInstructionBn
-        )
-    }
-
-    fun getDemoPrescriptionItems(): List<PrescriptionItem> {
-        val item1Schedule = DosageDecoder.decodeSchedule("1+0+1", "PC")
-        val item2Schedule = DosageDecoder.decodeSchedule("1+0+0", "AC")
-        val item3Schedule = DosageDecoder.decodeSchedule("0+0+1", "PC")
-
-        return listOf(
-            PrescriptionItem(
-                brandName = "Seclo 20",
-                genericName = "Omeprazole",
-                strength = "20mg",
-                form = "ক্যাপসুল",
-                rawDosagePattern = "1+0+0",
-                rawMealTiming = "AC",
-                durationDays = 14,
-                morningQty = item2Schedule.morningQty,
-                noonQty = item2Schedule.noonQty,
-                nightQty = item2Schedule.nightQty,
-                timingSlotBn = item2Schedule.timingSlotBn,
-                mealInstructionBn = item2Schedule.mealInstructionBn
-            ),
-            PrescriptionItem(
-                brandName = "Comet 500",
-                genericName = "Metformin",
-                strength = "500mg",
-                form = "ট্যাবলেট",
-                rawDosagePattern = "1+0+1",
-                rawMealTiming = "PC",
-                durationDays = 30,
-                morningQty = item1Schedule.morningQty,
-                noonQty = item1Schedule.noonQty,
-                nightQty = item1Schedule.nightQty,
-                timingSlotBn = item1Schedule.timingSlotBn,
-                mealInstructionBn = item1Schedule.mealInstructionBn
-            ),
-            PrescriptionItem(
-                brandName = "Osartil 50",
-                genericName = "Losartan Potassium",
-                strength = "50mg",
-                form = "ট্যাবলেট",
-                rawDosagePattern = "0+0+1",
-                rawMealTiming = "PC",
-                durationDays = 30,
-                morningQty = item3Schedule.morningQty,
-                noonQty = item3Schedule.noonQty,
-                nightQty = item3Schedule.nightQty,
-                timingSlotBn = item3Schedule.timingSlotBn,
-                mealInstructionBn = item3Schedule.mealInstructionBn
-            )
         )
     }
 }

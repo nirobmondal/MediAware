@@ -7,6 +7,7 @@ import com.example.mediaware.core.voice.ConsultationAudioRecorder
 import com.example.mediaware.features.chamber.domain.model.DoctorQuestionItem
 import com.example.mediaware.features.chamber.domain.model.LabSummaryItem
 import com.example.mediaware.features.chamber.domain.model.PatientPresentationSummary
+import com.example.mediaware.core.database.dao.UserProfileDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -73,7 +74,8 @@ sealed interface ChamberUiSideEffect {
 
 @HiltViewModel
 class ChamberViewModel @Inject constructor(
-    private val audioRecorder: ConsultationAudioRecorder
+    private val audioRecorder: ConsultationAudioRecorder,
+    private val userProfileDao: UserProfileDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChamberUiState())
@@ -83,6 +85,37 @@ class ChamberViewModel @Inject constructor(
     val sideEffects = _sideEffects.receiveAsFlow()
 
     private var recordingTickerJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            userProfileDao.getUserProfileFlow().collect { profile ->
+                if (profile != null) {
+                    val chronicText = if (profile.chronicConditions.isNotEmpty()) {
+                        profile.chronicConditions.joinToString(", ")
+                    } else {
+                        "কোনো দীর্ঘমেয়াদী সমস্যা যুক্ত নেই"
+                    }
+                    val genderText = when (profile.gender.uppercase()) {
+                        "MALE" -> "পুরুষ"
+                        "FEMALE" -> "মহিলা"
+                        else -> profile.gender
+                    }
+
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            patientSummary = currentState.patientSummary.copy(
+                                patientNameBn = profile.fullName.ifBlank { "রোগীর নাম নেই" },
+                                ageYears = profile.age,
+                                genderBn = genderText,
+                                bloodGroup = profile.bloodGroup?.ifBlank { "-" } ?: "-",
+                                chronicConditionsBn = chronicText
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun onEvent(event: ChamberUiEvent) {
         when (event) {
@@ -219,44 +252,35 @@ class ChamberViewModel @Inject constructor(
 
 private fun createDefaultPatientSummary(): PatientPresentationSummary {
     return PatientPresentationSummary(
-        patientNameBn = "করিম মিয়া",
-        ageYears = 50,
-        genderBn = "পুরুষ",
-        bloodGroup = "B+",
-        chronicConditionsBn = "টাইপ-২ ডায়াবেটিস (বর্ডারলাইন)",
-        chiefComplaintsBn = "শরীরে চরম দুর্বলতা, বুক ধড়ফড় এবং মাঝে মাঝে মাথা ঘোরা",
-        complaintDurationBn = "২ সপ্তাহ ধরে লক্ষণ বিদ্যমান",
-        recentLabs = listOf(
-            LabSummaryItem("Fasting Blood Sugar", "১৪০ mg/dL", "উচ্চ", 0xFFBA1A1A),
-            LabSummaryItem("HbA1c", "৭.২ %", "উচ্চ", 0xFFBA1A1A),
-            LabSummaryItem("Serum Creatinine", "১.৩ mg/dL", "সতর্ক", 0xFFE65100),
-            LabSummaryItem("Hemoglobin", "১৩.৫ g/dL", "স্বাভাবিক", 0xFF006A6A)
-        ),
-        trendObservationBn = "বিগত ৬ মাসে ফাস্টিং সুগার ১১০ ➔ ১৪০ mg/dL (উর্ধ্বমুখী ট্রেন্ড)",
-        currentMedicinesBn = "Metformin 500mg (১+০+১, খাবারের পর), Seclo 20mg (১+০+০, খাবারের আগে)"
+        patientNameBn = "রোগীর নাম",
+        ageYears = 0,
+        genderBn = "-",
+        bloodGroup = "-",
+        chronicConditionsBn = "কোনো দীর্ঘমেয়াদী সমস্যা যোগ করা হয়নি",
+        chiefComplaintsBn = "লক্ষণসমূহ ডাক্তারের কাছে তুলে ধরুন",
+        complaintDurationBn = "বর্তমান সমস্যা",
+        recentLabs = emptyList(),
+        trendObservationBn = "",
+        currentMedicinesBn = "চলমান কোনো ওষুধ নেই"
     )
 }
 
 private fun createDefaultQuestions(): List<DoctorQuestionItem> {
     return listOf(
         DoctorQuestionItem(
-            questionBn = "আমার ফাস্টিং সুগার ১৪০ দেখাচ্ছে, ওষুধের মাত্রা বা জীবনযাত্রায় কোনো পরিবর্তন দরকার কি?",
-            categoryBn = "ল্যাব রিপোর্ট সংক্রান্ত"
+            questionBn = "আমার বর্তমান শারীরিক সমস্যা অনুযায়ী কি কোনো বিশেষ সতর্কতা রয়েছে?",
+            categoryBn = "সাধারণ স্বাস্থ্য"
         ),
         DoctorQuestionItem(
-            questionBn = "সিরাম ক্রিয়েটিনিন ১.৩ বর্ডারলাইনে আছে, এর জন্য বাড়তি কোনো পরীক্ষা বা সতর্কতা প্রয়োজন কি?",
-            categoryBn = "কিডনি ও অন্যান্য টেস্ট"
+            questionBn = "বর্তমান প্রেসক্রিপশনের ওষুধগুলো কতদিন সেবন করতে হবে?",
+            categoryBn = "ওষুধের নিয়মাবলী"
         ),
         DoctorQuestionItem(
-            questionBn = "বর্তমান ওষুধে কোনো গ্যাস্ট্রিক বা পেটের সমস্যা হলে কি বিকল্প কোনো ওষুধ আছে?",
-            categoryBn = "ওষুধের পার্শ্বপ্রতিক্রিয়া"
+            questionBn = "খাদ্যাভ্যাস বা জীবনযাত্রায় কি কোনো পরিবর্তন আনা প্রয়োজন?",
+            categoryBn = "জীবনযাত্রা ও খাদ্যাভ্যাস"
         ),
         DoctorQuestionItem(
-            questionBn = "প্রতিদিন কতটুকু সময় হাঁটাচলা করা আমার জন্য নিরাপদ ও উপযুক্ত?",
-            categoryBn = "ব্যায়াম ও জীবনযাত্রা"
-        ),
-        DoctorQuestionItem(
-            questionBn = "পরবর্তী ফলো-আপ ভিজিটের জন্য কতদিন পর আবার ল্যাব টেস্ট করানো উচিত?",
+            questionBn = "পরবর্তী ফলো-আপ ভিজিটের জন্য কতদিন পর দেখা করা উচিত?",
             categoryBn = "পরবর্তী ফলো-আপ"
         )
     )

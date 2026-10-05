@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.example.mediaware.core.designsystem.component.MediAwareBottomNavBar
+import com.example.mediaware.core.designsystem.component.MediAwareNavTab
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +60,20 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+            )
+        },
+        bottomBar = {
+            MediAwareBottomNavBar(
+                selectedTab = MediAwareNavTab.HOME,
+                onTabSelected = { tab ->
+                    when (tab) {
+                        MediAwareNavTab.HOME -> { /* Already on Home */ }
+                        MediAwareNavTab.SYMPTOMS -> onNavigateToSymptomSelect()
+                        MediAwareNavTab.REPORT -> onNavigateToReportCapture()
+                        MediAwareNavTab.REMINDERS -> onNavigateToReminders()
+                        MediAwareNavTab.SETTINGS -> onNavigateToSettings()
+                    }
+                }
             )
         }
     ) { paddingValues ->

@@ -83,15 +83,19 @@ fun OcrVerifyScreen(
             ) {
                 Button(
                     onClick = { viewModel.onEvent(OcrVerifyUiEvent.OnConfirmAndAnalyze) },
+                    enabled = uiState.labItems.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                         .height(54.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryTeal,
+                        disabledContainerColor = Color(0xFFCFD9D9)
+                    )
                 ) {
                     Text(
-                        text = "✅ মান সঠিক আছে, বিশ্লেষণ করুন ➡️",
+                        text = if (uiState.labItems.isNotEmpty()) "✅ মান সঠিক আছে, বিশ্লেষণ করুন ➡️" else "কোনো টেস্ট মান নেই (যোগ করুন)",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -161,6 +165,45 @@ fun OcrVerifyScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.weight(1f)
             ) {
+                if (uiState.labItems.isEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "কোনো টেস্ট মান শনাক্ত করা যায়নি",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "ছবিটি অস্পষ্ট ছিল অথবা টেস্টের মান পাওয়া যায়নি। উপরের '+ নতুন যোগ করুন' বাটনে চাপ দিয়ে ম্যানুয়ালি টেস্টের মান যোগ করুন অথবা পরিষ্কার আলোতে পুনরায় ছবি তুলুন।",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+
                 items(uiState.labItems, key = { it.id }) { item ->
                     Card(
                         shape = RoundedCornerShape(14.dp),

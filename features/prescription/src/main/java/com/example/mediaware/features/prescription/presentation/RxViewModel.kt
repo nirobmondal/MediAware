@@ -1,5 +1,6 @@
 package com.example.mediaware.features.prescription.presentation
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +14,11 @@ import com.example.mediaware.features.prescription.domain.usecase.DecodeLatinRxU
 import com.example.mediaware.features.prescription.domain.usecase.DosageDecoder
 import com.example.mediaware.features.prescription.domain.usecase.GetMedicineInfoUseCase
 import com.example.mediaware.features.prescription.domain.usecase.ScheduleDoseAlarmsUseCase
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +26,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 data class RxUiState(
     val isLoading: Boolean = false,
@@ -39,7 +47,6 @@ data class RxUiState(
 
 sealed interface RxUiEvent {
     data class OnImageCaptured(val uri: Uri?) : RxUiEvent
-    data object OnUseDemoSample : RxUiEvent
     data class OnVoiceInputSubmitted(val spokenText: String) : RxUiEvent
     data class OnSearchQueryChanged(val query: String) : RxUiEvent
     data class OnSelectSearchSuggestion(val drugName: String) : RxUiEvent
@@ -66,10 +73,13 @@ sealed interface RxUiSideEffect {
 
 @HiltViewModel
 class RxViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val decodeLatinRxUseCase: DecodeLatinRxUseCase,
     private val getMedicineInfoUseCase: GetMedicineInfoUseCase,
     private val scheduleDoseAlarmsUseCase: ScheduleDoseAlarmsUseCase
 ) : ViewModel() {
+
+    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     private val _uiState = MutableStateFlow(RxUiState())
     val uiState: StateFlow<RxUiState> = _uiState.asStateFlow()
@@ -113,16 +123,27 @@ class RxViewModel @Inject constructor(
             is RxUiEvent.OnImageCaptured -> {
                 _uiState.update { it.copy(isLoading = true, capturedImageUri = event.uri) }
                 viewModelScope.launch {
-                    val demoItems = decodeLatinRxUseCase.getDemoPrescriptionItems()
-                    _uiState.update { it.copy(isLoading = false, items = demoItems) }
-                    _sideEffects.send(RxUiSideEffect.NavigateToVerify)
-                }
-            }
-
-            is RxUiEvent.OnUseDemoSample -> {
-                val demoItems = decodeLatinRxUseCase.getDemoPrescriptionItems()
-                _uiState.update { it.copy(items = demoItems) }
-                viewModelScope.launch {
+                    val uri = event.uri
+                    val extractedItems = if (uri != null) {
+                        try {
+                            val inputImage = InputImage.fromFilePath(context, uri)
+                            val visionText = suspendCancellableCoroutine<String> { continuation ->
+                                recognizer.process(inputImage)
+                                    .addOnSuccessListener { if (continuation.isActive) continuation.resume(it.text) }
+                                    .addOnFailureListener {
+                                        Timber.e(it, "ML Kit OCR failed for Rx")
+                                        if (continuation.isActive) continuation.resume("")
+                                    }
+                            }
+                            decodeLatinRxUseCase(visionText)
+                        } catch (e: Exception) {
+                            Timber.e(e, "Error processing Rx image URI: $uri")
+                            emptyList()
+                        }
+                    } else {
+                        emptyList()
+                    }
+                    _uiState.update { it.copy(isLoading = false, items = extractedItems) }
                     _sideEffects.send(RxUiSideEffect.NavigateToVerify)
                 }
             }

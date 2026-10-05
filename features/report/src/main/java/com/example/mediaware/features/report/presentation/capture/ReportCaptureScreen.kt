@@ -216,7 +216,7 @@ fun ReportCaptureScreen(
                             .clip(CircleShape)
                             .background(Color.White)
                             .clickable {
-                                viewModel.onEvent(ReportCaptureUiEvent.OnImageCaptured("content://media/external/images/media/mock_lab_slip"))
+                                galleryLauncher.launch("image/*")
                             },
                         contentAlignment = Alignment.Center
                     ) {

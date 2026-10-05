@@ -170,7 +170,7 @@ fun MedicineHistoryScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "মাসিক সেবন ক্যালেন্ডার (অক্টোবর ২০২৬)",
+                                text = "মাসিক সেবন ক্যালেন্ডার",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -252,9 +252,17 @@ fun MedicineHistoryScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        uiState.titrationHistory.forEach { titration ->
-                            TitrationItemRow(titration = titration)
-                            Spacer(modifier = Modifier.height(8.dp))
+                        if (uiState.titrationHistory.isEmpty()) {
+                            Text(
+                                text = "কোনো ডোজ পরিবর্তনের ইতিহাস সংরক্ষিত নেই।",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            uiState.titrationHistory.forEach { titration ->
+                                TitrationItemRow(titration = titration)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
@@ -268,6 +276,39 @@ fun MedicineHistoryScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+
+            if (uiState.todayRecords.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "আজকের জন্য কোনো নির্ধারিত ডোজ নেই",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "নতুন প্রেসক্রিপশন স্ক্যান করে রুটিন শিডিউল তৈরি করলে এখানে ডোজের তালিকা দেখতে পাবেন।",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
             }
 
             // Today's Scheduled Dose Items

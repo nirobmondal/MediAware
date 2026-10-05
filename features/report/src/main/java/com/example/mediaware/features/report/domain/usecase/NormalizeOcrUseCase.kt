@@ -118,58 +118,6 @@ class NormalizeOcrUseCase @Inject constructor() {
                 }
             }
         }
-
-        // If no recognizable text was detected from raw input (e.g. mock or manual test scan),
-        // provide standard defaults so the user has immediate test items to verify and edit!
-        if (matchedItems.isEmpty()) {
-            return listOf(
-                ExtractedLabItem(
-                    id = UUID.randomUUID().toString(),
-                    key = "fbs",
-                    testNameBn = "ফাস্টিং ব্লাড সুগার (FBS)",
-                    testNameEn = "Fasting Blood Sugar",
-                    numericValue = 140.0,
-                    unit = "mg/dL",
-                    normalMin = 70.0,
-                    normalMax = 99.0,
-                    criticalThreshold = 126.0
-                ),
-                ExtractedLabItem(
-                    id = UUID.randomUUID().toString(),
-                    key = "creatinine",
-                    testNameBn = "সিরাম ক্রিয়েটিনিন (Serum Creatinine)",
-                    testNameEn = "Serum Creatinine",
-                    numericValue = 1.3,
-                    unit = "mg/dL",
-                    normalMin = 0.6,
-                    normalMax = 1.2,
-                    criticalThreshold = 1.5
-                ),
-                ExtractedLabItem(
-                    id = UUID.randomUUID().toString(),
-                    key = "hemoglobin",
-                    testNameBn = "হিমোগ্লোবিন (Hemoglobin)",
-                    testNameEn = "Hemoglobin",
-                    numericValue = 13.5,
-                    unit = "g/dL",
-                    normalMin = 12.0,
-                    normalMax = 16.5,
-                    criticalThreshold = 10.0
-                ),
-                ExtractedLabItem(
-                    id = UUID.randomUUID().toString(),
-                    key = "cholesterol",
-                    testNameBn = "টোটাল কোলেস্টেরল (Total Cholesterol)",
-                    testNameEn = "Total Cholesterol",
-                    numericValue = 210.0,
-                    unit = "mg/dL",
-                    normalMin = 100.0,
-                    normalMax = 199.0,
-                    criticalThreshold = 240.0
-                )
-            )
-        }
-
         return matchedItems
     }
 }

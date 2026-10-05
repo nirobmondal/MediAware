@@ -19,17 +19,16 @@ class SummarizeConsultationUseCase @Inject constructor() {
     operator fun invoke(
         transcript: String? = null,
         consultationNotes: String? = null
-    ): ConsultationSummary {
-        // In full online mode, Gemini 1.5 Flash provides NLP extraction.
-        // In local/offline mode or default chamber review, deterministic clinical rule extraction applies.
-        return if (!transcript.isNullOrBlank() || !consultationNotes.isNullOrBlank()) {
-            extractFromText(transcript ?: consultationNotes.orEmpty())
+    ): ConsultationSummary? {
+        val text = transcript?.takeIf { it.isNotBlank() } ?: consultationNotes?.takeIf { it.isNotBlank() }
+        return if (!text.isNullOrBlank()) {
+            extractFromText(text)
         } else {
-            getDefaultConsultationSummary()
+            null
         }
     }
 
-    private fun extractFromText(text: String): ConsultationSummary {
+    private fun extractFromText(text: String): ConsultationSummary? {
         val actionItems = mutableListOf<ConsultationActionItem>()
         var itemId = 1
 
@@ -40,7 +39,7 @@ class SummarizeConsultationUseCase @Inject constructor() {
             actionItems.add(
                 ConsultationActionItem(
                     id = "act_${itemId++}",
-                    task = "মেটফরমিন ৫০০ নিয়মিত সেবন চালিয়ে যান (ভরা পেটে)",
+                    task = "প্রেসক্রিপশন অনুযায়ী নিয়মিত ওষুধ সেবন চালিয়ে যান",
                     category = ActionItemCategory.MEDICATION,
                     isCompleted = false
                 )
@@ -52,7 +51,7 @@ class SummarizeConsultationUseCase @Inject constructor() {
             actionItems.add(
                 ConsultationActionItem(
                     id = "act_${itemId++}",
-                    task = "আগামী ৩ মাস পর HbA1c ও ফাস্টিং সুগার টেস্ট করান",
+                    task = "ডাক্তারের পরামর্শ অনুযায়ী নির্দিষ্ট ল্যাব পরীক্ষা সম্পন্ন করুন",
                     category = ActionItemCategory.TEST,
                     isCompleted = false
                 )
@@ -64,7 +63,7 @@ class SummarizeConsultationUseCase @Inject constructor() {
             actionItems.add(
                 ConsultationActionItem(
                     id = "act_${itemId++}",
-                    task = "প্রতিদিন সকালে অন্তত ৩০ মিনিট দ্রুত হাঁটা অভ্যাস করুন",
+                    task = "প্রতিদিন পরিমিত শারীরিক ব্যায়াম বা নিয়মিত হাঁটার অভ্যাস বজায় রাখুন",
                     category = ActionItemCategory.LIFESTYLE,
                     isCompleted = false
                 )
@@ -72,7 +71,7 @@ class SummarizeConsultationUseCase @Inject constructor() {
             actionItems.add(
                 ConsultationActionItem(
                     id = "act_${itemId++}",
-                    task = "অতিরিক্ত মিষ্টি ও তৈলাক্ত খাবার খাওয়া সম্পূর্ণ পরিহার করুন",
+                    task = "অতিরিক্ত মিষ্টি ও তৈলাক্ত খাবার খাওয়া পরিহার করুন",
                     category = ActionItemCategory.LIFESTYLE,
                     isCompleted = false
                 )
@@ -80,64 +79,19 @@ class SummarizeConsultationUseCase @Inject constructor() {
         }
 
         if (actionItems.isEmpty()) {
-            return getDefaultConsultationSummary()
+            return null
         }
 
         return ConsultationSummary(
             id = "consult_summary_${System.currentTimeMillis()}",
-            doctorName = "ডাঃ প্রফেসর এ. কে. আজাদ",
-            visitDateBn = "আজকের পরামর্শ",
-            summaryBn = "আপনার সাম্প্রতিক রিপোর্ট অনুযায়ী সুগার কিছুটা উর্ধ্বমুখী। নির্ধারিত নিয়মে ওষুধ গ্রহণ করুন, খাদ্যাভ্যাসে সচেতন হোন এবং নিয়মিত শরীরচর্চা বজায় রাখুন।",
+            doctorName = "চিকিৎসক",
+            visitDateBn = "পরামর্শ সারাংশ",
+            summaryBn = "প্রেসক্রিপশন ও ডাক্তারের পরামর্শ অনুযায়ী নিয়মিত ওষুধ সেবন করুন এবং নির্দেশিত নিয়ম মেনে চলুন।",
             actionItems = actionItems,
-            pendingQuestions = listOf(
-                "পরবর্তী টেস্টের আগে কি খালি পেটে থাকতে হবে?",
-                "কিডনির ক্রিয়েটিনিন মাত্রার কোনো বিশেষ পর্যবেক্ষণ দরকার কিনা?"
-            ),
-            followUpDays = 90,
-            followUpDateStringBn = "৩ মাস পর (৯০ দিন)",
-            followUpReasonBn = "ডায়াবেটিস নিয়ন্ত্রণ ও রক্তের সুগার পর্যবেক্ষণ"
-        )
-    }
-
-    private fun getDefaultConsultationSummary(): ConsultationSummary {
-        return ConsultationSummary(
-            id = "consult_summary_default",
-            doctorName = "ডাঃ প্রফেসর এ. কে. আজাদ (মেডিসিন বিশেষজ্ঞ)",
-            visitDateBn = "৪ অক্টোবর, ২০২৬",
-            summaryBn = "আপনার রক্তে সুগারের মাত্রা স্বাভাবিকের চেয়ে কিছুটা বেশি পাওয়া গেছে। নিয়মিত প্রেসক্রিপশন অনুযায়ী ওষুধ গ্রহণ করবেন এবং মিষ্টি ও তৈলাক্ত খাদ্য পরিহার করে প্রতিদিন সকালে শরীরচর্চা করবেন।",
-            actionItems = listOf(
-                ConsultationActionItem(
-                    id = "act_1",
-                    task = "প্রেসক্রিপশন অনুযায়ী মেটফরমিন ৫০০ নিয়মিত গ্রহণ শুরু করুন",
-                    category = ActionItemCategory.MEDICATION,
-                    isCompleted = false
-                ),
-                ConsultationActionItem(
-                    id = "act_2",
-                    task = "প্রতিদিন সকালে অন্তত ৩০ মিনিট মুক্ত বাতাসে হাঁটুন",
-                    category = ActionItemCategory.LIFESTYLE,
-                    isCompleted = false
-                ),
-                ConsultationActionItem(
-                    id = "act_3",
-                    task = "আগামী ৩ মাস পর নতুন প্রেসক্রিপশন অনুযায়ী HbA1c টেস্ট করান",
-                    category = ActionItemCategory.TEST,
-                    isCompleted = false
-                ),
-                ConsultationActionItem(
-                    id = "act_4",
-                    task = "প্রতি সপ্তাহে অন্তত একবার বাসায় গ্লুকোমিটারে সুগার মাপুন ও ডায়েরিতে লিখে রাখুন",
-                    category = ActionItemCategory.GENERAL,
-                    isCompleted = false
-                )
-            ),
-            pendingQuestions = listOf(
-                "ক্রিয়েটিনিন সামান্য বেশিতে কোনো খাদ্য নিষেধাজ্ঞা আছে কি?",
-                "ব্যায়ামের পর কোনো মৃদু মাথা ঘোরার অনুভূতি হলে করণীয় কি?"
-            ),
-            followUpDays = 90,
-            followUpDateStringBn = "৩ মাস পর (৯০ দিন)",
-            followUpReasonBn = "ডায়াবেটিস নিয়ন্ত্রণ ও রক্তের সুগার পর্যবেক্ষণ"
+            pendingQuestions = emptyList(),
+            followUpDays = 30,
+            followUpDateStringBn = "১ মাস পর (৩০ দিন)",
+            followUpReasonBn = "ডাক্তারের পরামর্শ পর্যালোচনা ও ফলো-আপ"
         )
     }
 }

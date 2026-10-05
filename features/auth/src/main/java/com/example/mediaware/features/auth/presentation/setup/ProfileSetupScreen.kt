@@ -120,7 +120,7 @@ fun ProfileSetupScreen(
                 value = state.fullName,
                 onValueChange = { viewModel.onEvent(ProfileSetupUiEvent.OnNameChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("করিম মিয়া", color = Color(0xFF889393)) },
+                placeholder = { Text("আপনার নাম লিখুন", color = Color(0xFF889393)) },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(

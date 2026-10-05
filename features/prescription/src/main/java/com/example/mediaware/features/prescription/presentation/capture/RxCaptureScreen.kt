@@ -239,7 +239,7 @@ fun RxCaptureScreen(
                             .clip(CircleShape)
                             .background(Color.White)
                             .clickable {
-                                onEvent(RxUiEvent.OnUseDemoSample)
+                                galleryLauncher.launch("image/*")
                             },
                         contentAlignment = Alignment.Center
                     ) {
