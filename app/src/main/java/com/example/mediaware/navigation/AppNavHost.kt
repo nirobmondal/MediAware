@@ -69,6 +69,16 @@ fun AppNavHost(
         }
         composable("settings") {
             SettingsScreen(
+                onNavigateToProfile = {
+                    navController.navigate("profile")
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable("profile") {
+            com.example.mediaware.features.auth.presentation.profile.ProfileScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

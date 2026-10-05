@@ -26,6 +26,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
+
 @Composable
 fun ReportCaptureScreen(
     viewModel: ReportCaptureViewModel = hiltViewModel(),
@@ -34,6 +41,52 @@ fun ReportCaptureScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            viewModel.onEvent(ReportCaptureUiEvent.OnGalleryImageSelected(tempCameraUri.toString()))
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                val file = File.createTempFile("report_capture_", ".jpg", context.cacheDir)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                tempCameraUri = uri
+                takePictureLauncher.launch(uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "ক্যামেরা ফাইল তৈরিতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "ছবি তোলার জন্য ক্যামেরার অনুমতি দিন", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val onCapturePhoto = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            try {
+                val file = File.createTempFile("report_capture_", ".jpg", context.cacheDir)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                tempCameraUri = uri
+                takePictureLauncher.launch(uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "ক্যামেরা চালু করতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -216,7 +269,7 @@ fun ReportCaptureScreen(
                             .clip(CircleShape)
                             .background(Color.White)
                             .clickable {
-                                galleryLauncher.launch("image/*")
+                                onCapturePhoto()
                             },
                         contentAlignment = Alignment.Center
                     ) {

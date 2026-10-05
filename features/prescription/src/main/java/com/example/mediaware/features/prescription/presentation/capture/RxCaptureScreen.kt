@@ -30,6 +30,13 @@ import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.features.prescription.presentation.RxUiEvent
 import com.example.mediaware.features.prescription.presentation.RxUiState
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RxCaptureScreen(
@@ -41,6 +48,52 @@ fun RxCaptureScreen(
     var isFlashOn by remember { mutableStateOf(false) }
     var showManualInputDialog by remember { mutableStateOf(false) }
     var manualInputText by remember { mutableStateOf("") }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            onEvent(RxUiEvent.OnImageCaptured(tempCameraUri!!))
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                val file = File.createTempFile("rx_capture_", ".jpg", context.cacheDir)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                tempCameraUri = uri
+                takePictureLauncher.launch(uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "ক্যামেরা ফাইল তৈরিতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "প্রেসক্রিপশন ছবি তোলার জন্য ক্যামেরার অনুমতি দিন", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val onCapturePhoto = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            try {
+                val file = File.createTempFile("rx_capture_", ".jpg", context.cacheDir)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                tempCameraUri = uri
+                takePictureLauncher.launch(uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "ক্যামেরা চালু করতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -239,7 +292,7 @@ fun RxCaptureScreen(
                             .clip(CircleShape)
                             .background(Color.White)
                             .clickable {
-                                galleryLauncher.launch("image/*")
+                                onCapturePhoto()
                             },
                         contentAlignment = Alignment.Center
                     ) {

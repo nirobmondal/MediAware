@@ -16,8 +16,8 @@ class RegisterUserUseCase @Inject constructor(
         if (!bdPhoneRegex.matches(cleanPhone)) {
             return Resource.Error("সঠিক ১১ ডিজিটের বাংলাদেশী মোবাইল নম্বর দিন (যেমন: 01712345678)")
         }
-        if (pin.length != 4 || !pin.all { it.isDigit() }) {
-            return Resource.Error("পিন অবশ্যই ৪ সংখ্যার হতে হবে")
+        if (pin.length != 5 || !pin.all { it.isDigit() }) {
+            return Resource.Error("পিন অবশ্যই ৫ সংখ্যার হতে হবে")
         }
         if (pin != confirmPin) {
             return Resource.Error("দুই পিন মেলেনি, আবার লিখুন")

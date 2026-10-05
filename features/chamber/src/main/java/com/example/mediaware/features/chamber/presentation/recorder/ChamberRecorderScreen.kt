@@ -22,6 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.example.mediaware.features.chamber.presentation.ChamberUiEvent
 import com.example.mediaware.features.chamber.presentation.ChamberUiState
 import kotlin.random.Random
@@ -33,6 +40,17 @@ fun ChamberRecorderScreen(
     onEvent: (ChamberUiEvent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            onEvent(ChamberUiEvent.OnStartRecording)
+        } else {
+            Toast.makeText(context, "অডিও রেকর্ড করতে মাইক্রোফোন ব্যবহারের অনুমতি দিন", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val maxSeconds = 15 * 60f // 900 seconds
     val progressFraction = (uiState.recordingDurationSeconds.toFloat() / maxSeconds).coerceIn(0f, 1f)
 
@@ -243,7 +261,16 @@ fun ChamberRecorderScreen(
                             if (uiState.isRecording) {
                                 onEvent(ChamberUiEvent.OnStopRecording)
                             } else {
-                                onEvent(ChamberUiEvent.OnStartRecording)
+                                val hasPermission = ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+
+                                if (hasPermission) {
+                                    onEvent(ChamberUiEvent.OnStartRecording)
+                                } else {
+                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
                             }
                         },
                     contentAlignment = Alignment.Center

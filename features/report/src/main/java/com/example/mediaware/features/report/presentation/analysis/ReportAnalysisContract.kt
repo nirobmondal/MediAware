@@ -7,6 +7,8 @@ import com.example.mediaware.features.report.domain.model.LabReportAnalysis
 
 data class ReportAnalysisUiState(
     val analysis: LabReportAnalysis? = null,
+    val overallAiAnalysisBn: String? = null,
+    val isAiAnalyzing: Boolean = false,
     val isPlayingTts: Boolean = false,
     val currentlyPlayingItemKey: String? = null,
     val isLoading: Boolean = true

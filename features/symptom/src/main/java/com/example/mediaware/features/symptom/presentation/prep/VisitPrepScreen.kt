@@ -204,7 +204,59 @@ fun VisitPrepScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // AI Symptoms & Disease Analysis Card
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
+                        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        tint = PrimaryTeal,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "এআই লক্ষণ ও সম্ভাব্য স্বাস্থ্য বিশ্লেষণ",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrimaryTeal
+                                        )
+                                    )
+                                }
+                                if (uiState.isAiAnalyzing) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = PrimaryTeal
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text(
+                                text = uiState.aiSymptomAnalysisBn ?: if (uiState.isAiAnalyzing) "জেমিনাই এআই আপনার লক্ষণগুলো বিশ্লেষণ করছে..." else "লক্ষণ পর্যালোচনা করা হচ্ছে...",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    lineHeight = 22.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // 30-Second Doctor Presentation Points
                     Card(
@@ -247,7 +299,7 @@ fun VisitPrepScreen(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Targeted Doctor Questions (DGHS guidelines)
+                    // Targeted AI Doctor Cheat Questions
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -259,7 +311,7 @@ fun VisitPrepScreen(
                                 Icon(Icons.Default.QuestionAnswer, contentDescription = null, tint = Color(0xFF2B5B84))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "ডাক্তারকে আপনার যে প্রশ্নগুলো করা উচিত",
+                                    text = "ডাক্তারকে জিজ্ঞেস করার এআই চিট-প্রশ্নাবলী",
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF2B5B84)
@@ -267,12 +319,23 @@ fun VisitPrepScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.height(10.dp))
-                            prep.doctorQuestionsBn.forEach { question ->
-                                Text(
-                                    text = question,
-                                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
+                            val questionsToDisplay = uiState.aiCheatQuestions.ifEmpty { prep.doctorQuestionsBn }
+                            questionsToDisplay.forEachIndexed { index, question ->
+                                Row(
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Text(
+                                        text = "•",
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryTeal,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = question,
+                                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp)
+                                    )
+                                }
                             }
                         }
                     }

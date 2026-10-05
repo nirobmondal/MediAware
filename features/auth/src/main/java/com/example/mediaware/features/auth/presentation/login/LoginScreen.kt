@@ -45,6 +45,12 @@ import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.core.designsystem.theme.TextPrimaryDark
 import com.example.mediaware.core.designsystem.theme.TextSecondaryGrey
 
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
@@ -53,6 +59,45 @@ fun LoginScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
+    val launchBiometricPrompt = {
+        val activity = context as? FragmentActivity
+        if (activity != null) {
+            val executor = ContextCompat.getMainExecutor(context)
+            val biometricPrompt = BiometricPrompt(
+                activity,
+                executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        viewModel.onEvent(LoginUiEvent.OnBiometricAuthSuccess)
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                            viewModel.onEvent(LoginUiEvent.OnBiometricAuthError(errString.toString()))
+                        }
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                }
+            )
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("বায়োমেট্রিক দিয়ে আনলক করুন")
+                .setSubtitle("আপনার আঙুলের ছাপ স্ক্যান করুন")
+                .setNegativeButtonText("পিন ব্যবহার করুন")
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                .build()
+
+            biometricPrompt.authenticate(promptInfo)
+        }
+    }
 
     LaunchedEffect(key1 = true) {
         viewModel.effect.collect { effect ->
@@ -94,7 +139,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "আপনার ৪ সংখ্যার গোপন পিন দিন",
+                    text = "আপনার ৫ সংখ্যার গোপন পিন দিন",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 15.sp,
                         color = TextSecondaryGrey
@@ -104,12 +149,12 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 4 PIN Dots
+                // 5 PIN Dots
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    for (i in 0 until 4) {
+                    for (i in 0 until 5) {
                         val isFilled = i < state.enteredPin.length
                         Box(
                             modifier = Modifier
@@ -176,8 +221,7 @@ fun LoginScreen(
                             .size(68.dp)
                             .clip(CircleShape)
                             .clickable(enabled = state.isBiometricAvailable) {
-                                // Biometric prompt trigger
-                                viewModel.onEvent(LoginUiEvent.OnBiometricAuthSuccess)
+                                launchBiometricPrompt()
                             },
                         contentAlignment = Alignment.Center
                     ) {

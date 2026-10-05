@@ -7,6 +7,9 @@ import com.example.mediaware.features.symptom.domain.model.VisitPrepCard
 
 data class VisitPrepUiState(
     val visitCard: VisitPrepCard? = null,
+    val aiSymptomAnalysisBn: String? = null,
+    val aiCheatQuestions: List<String> = emptyList(),
+    val isAiAnalyzing: Boolean = false,
     val isLoading: Boolean = true,
     val isPlayingTts: Boolean = false
 ) : ViewState

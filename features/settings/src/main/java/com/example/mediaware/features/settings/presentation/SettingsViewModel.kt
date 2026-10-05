@@ -19,6 +19,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val user = userRepository.getUserCredentials()
             setState { copy(isBiometricEnabled = user?.isBiometricEnabled ?: false) }
+
+            userRepository.getUserProfileFlow().collect { profile ->
+                if (profile != null) {
+                    setState {
+                        copy(
+                            userName = profile.fullName,
+                            userPhone = profile.phoneNumber,
+                            bloodGroup = profile.bloodGroup ?: "A+",
+                            userAge = profile.age,
+                            isBiometricEnabled = profile.isBiometricEnabled
+                        )
+                    }
+                }
+            }
         }
     }
 

@@ -24,13 +24,13 @@ class RegistrationViewModel @Inject constructor(
             }
             is RegistrationUiEvent.OnPinChanged -> {
                 val cleaned = event.pin.toEnglishDigits().filter { it.isDigit() }
-                if (cleaned.length <= 4) {
+                if (cleaned.length <= 5) {
                     setState { copy(pin = cleaned, pinErrorBn = null) }
                 }
             }
             is RegistrationUiEvent.OnConfirmPinChanged -> {
                 val cleaned = event.confirmPin.toEnglishDigits().filter { it.isDigit() }
-                if (cleaned.length <= 4) {
+                if (cleaned.length <= 5) {
                     setState { copy(confirmPin = cleaned, pinErrorBn = null) }
                 }
             }
@@ -44,8 +44,8 @@ class RegistrationViewModel @Inject constructor(
             setState { copy(phoneErrorBn = "সঠিক ১১ ডিজিটের বাংলাদেশী মোবাইল নম্বর দিন") }
             return
         }
-        if (state.pin.length != 4) {
-            setState { copy(pinErrorBn = "৪ সংখ্যার পিন দিন") }
+        if (state.pin.length != 5) {
+            setState { copy(pinErrorBn = "৫ সংখ্যার পিন দিন") }
             return
         }
         if (state.pin != state.confirmPin) {

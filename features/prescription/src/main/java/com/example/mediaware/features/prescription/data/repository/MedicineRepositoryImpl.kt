@@ -7,12 +7,14 @@ import com.example.mediaware.core.database.entity.MedicineCacheEntity
 import com.example.mediaware.features.prescription.domain.model.MedicineExplanation
 import com.example.mediaware.features.prescription.domain.repository.MedicineRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import com.example.mediaware.core.common.ai.GeminiAiClient
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MedicineRepositoryImpl @Inject constructor(
     private val cacheDao: MedicineCacheDao,
+    private val geminiAiClient: GeminiAiClient,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : MedicineRepository {
 
@@ -130,15 +132,24 @@ class MedicineRepositoryImpl @Inject constructor(
             val baseMatch = localKnowledgeBase[normalized]
                 ?: localKnowledgeBase.entries.firstOrNull { normalized.contains(it.key) || it.key.contains(normalized) }?.value
 
+            val aiExplanation = geminiAiClient.explainMedicine(
+                name = genericOrBrand,
+                genericName = baseMatch?.genericName,
+                strength = null,
+                dosagePattern = baseMatch?.standardDosageBn,
+                timing = null
+            )
+
             val explanation = baseMatch?.copy(
                 brandName = genericOrBrand,
+                primaryPurposeBn = if (aiExplanation.isNotBlank()) aiExplanation else baseMatch.primaryPurposeBn,
                 isFromCache = false
             ) ?: MedicineExplanation(
                 genericName = genericOrBrand.replaceFirstChar { it.uppercase() },
                 brandName = genericOrBrand,
                 banglaName = genericOrBrand,
                 therapeuticClass = "চিকিৎসক নির্দেশিত প্রেসক্রিপশন মেডিসিন",
-                primaryPurposeBn = "রোগের উপশম ও শারীরিক সুস্থতার জন্য বিশেষজ্ঞ চিকিৎসকের পরামর্শে নির্দেশিত হয়েছে।",
+                primaryPurposeBn = if (aiExplanation.isNotBlank()) aiExplanation else "রোগের উপশম ও শারীরিক সুস্থতার জন্য বিশেষজ্ঞ চিকিৎসকের পরামর্শে নির্দেশিত হয়েছে।",
                 standardDosageBn = "প্রেসক্রিপশনে উল্লেখিত মাত্রা ও সময় অনুযায়ী সেবন করুন।",
                 sideEffectsBn = "যেকোনো নতুন অস্বস্তি বা অ্যালার্জি দেখা দিলে চিকিৎসকের সাথে কথা বলুন।",
                 criticalWarningsBn = "চিকিৎসকের পরামর্শ ছাড়া ওষুধের মাত্রা বাড়াবেন না বা বন্ধ করবেন না।",

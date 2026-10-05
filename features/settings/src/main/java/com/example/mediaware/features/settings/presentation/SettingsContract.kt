@@ -5,9 +5,13 @@ import com.example.mediaware.core.common.base.ViewSideEffect
 import com.example.mediaware.core.common.base.ViewState
 
 data class SettingsUiState(
-    val cacheSizeMB: Double = 2.5,
-    val medicineCacheCount: Int = 12,
-    val testCacheCount: Int = 8,
+    val userName: String = "",
+    val userPhone: String = "",
+    val bloodGroup: String = "",
+    val userAge: Int = 0,
+    val cacheSizeMB: Double = 0.5,
+    val medicineCacheCount: Int = 6,
+    val testCacheCount: Int = 4,
     val isBiometricEnabled: Boolean = false,
     val showClearCacheDialog: Boolean = false,
     val isClearingCache: Boolean = false

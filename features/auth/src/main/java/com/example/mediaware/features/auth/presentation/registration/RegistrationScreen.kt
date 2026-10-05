@@ -101,7 +101,7 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "আপনার মোবাইল নম্বর ও ৪ সংখ্যার গোপন পিন দিন। কোনো ইন্টারনেট বা এসএমএস চার্জ লাগবে না।",
+                text = "আপনার মোবাইল নম্বর ও ৫ সংখ্যার গোপন পিন দিন। কোনো ইন্টারনেট বা এসএমএস চার্জ লাগবে না।",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp,
                     color = TextSecondaryGrey
@@ -158,7 +158,7 @@ fun RegistrationScreen(
 
             // PIN field
             Text(
-                text = "৪ সংখ্যার গোপন পিন সেট করুন:",
+                text = "৫ সংখ্যার গোপন পিন সেট করুন:",
                 style = MaterialTheme.typography.labelLarge.copy(color = TextPrimaryDark)
             )
             Spacer(modifier = Modifier.height(6.dp))
@@ -167,7 +167,7 @@ fun RegistrationScreen(
                 value = state.pin,
                 onValueChange = { viewModel.onEvent(RegistrationUiEvent.OnPinChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("• • • •", color = Color(0xFF889393)) },
+                placeholder = { Text("• • • • •", color = Color(0xFF889393)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Lock,
@@ -199,7 +199,7 @@ fun RegistrationScreen(
                 value = state.confirmPin,
                 onValueChange = { viewModel.onEvent(RegistrationUiEvent.OnConfirmPinChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("• • • •", color = Color(0xFF889393)) },
+                placeholder = { Text("• • • • •", color = Color(0xFF889393)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Lock,
@@ -263,42 +263,7 @@ fun RegistrationScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFCFD9D9))
-                Text(
-                    text = " অথবা ",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondaryGrey)
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFCFD9D9))
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Google Sign-In placeholder button
-            OutlinedButton(
-                onClick = {
-                    // Future Cloud Sync Google Sign-In hook
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Text(
-                    text = "🌐 Google দিয়ে এগিয়ে যান",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.sp,
-                        color = TextPrimaryDark
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Row(
                 modifier = Modifier

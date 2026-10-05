@@ -1,15 +1,19 @@
 package com.example.mediaware.features.report.presentation.analysis
 
+import androidx.lifecycle.viewModelScope
+import com.example.mediaware.core.common.ai.GeminiAiClient
 import com.example.mediaware.core.common.base.BaseViewModel
 import com.example.mediaware.features.report.domain.model.ExtractedLabItem
 import com.example.mediaware.features.report.domain.usecase.AnalyzeLabReportUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class ReportAnalysisViewModel @Inject constructor(
-    private val analyzeLabReportUseCase: AnalyzeLabReportUseCase
+    private val analyzeLabReportUseCase: AnalyzeLabReportUseCase,
+    private val geminiAiClient: GeminiAiClient
 ) : BaseViewModel<ReportAnalysisUiState, ReportAnalysisUiEvent, ReportAnalysisSideEffect>(
     ReportAnalysisUiState()
 ) {
@@ -71,7 +75,48 @@ class ReportAnalysisViewModel @Inject constructor(
         }
 
         val analysisResult = analyzeLabReportUseCase(items)
-        setState { copy(analysis = analysisResult, isLoading = false) }
+        setState { copy(analysis = analysisResult, isLoading = false, isAiAnalyzing = true) }
+
+        // Asynchronously enrich with Gemini AI Explanation in Bengali
+        viewModelScope.launch {
+            val summaryText = items.joinToString("\n") { 
+                "- ${it.testNameBn}: ${it.numericValue} ${it.unit} (স্বাভাবিক মাত্রা: ${it.normalMin}-${it.normalMax} ${it.unit}, স্ট্যাটাস: ${it.status.displayNameBn})"
+            }
+
+            // 1. Overall Lab Report AI Analysis
+            val overallAi = geminiAiClient.explainLabReportOverall(summaryText)
+
+            // 2. Individual Item AI Explanations
+            val enriched = items.map { item ->
+                val aiText = geminiAiClient.explainLabTest(
+                    testName = item.testNameBn,
+                    value = item.numericValue,
+                    unit = item.unit,
+                    normalMin = item.normalMin,
+                    normalMax = item.normalMax,
+                    status = item.status.displayNameBn
+                )
+                item.copy(clinicalExplanationBn = aiText)
+            }
+
+            val currentAnalysis = uiState.value.analysis
+            if (currentAnalysis != null) {
+                setState { 
+                    copy(
+                        analysis = currentAnalysis.copy(items = enriched),
+                        overallAiAnalysisBn = overallAi,
+                        isAiAnalyzing = false
+                    ) 
+                }
+            } else {
+                setState { 
+                    copy(
+                        overallAiAnalysisBn = overallAi,
+                        isAiAnalyzing = false
+                    ) 
+                }
+            }
+        }
     }
 
     private fun createItemFromKeyAndValue(key: String, value: Double): ExtractedLabItem {

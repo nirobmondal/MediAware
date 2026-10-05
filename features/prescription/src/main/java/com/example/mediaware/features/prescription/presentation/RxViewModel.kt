@@ -17,6 +17,7 @@ import com.example.mediaware.features.prescription.domain.usecase.ScheduleDoseAl
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.example.mediaware.core.common.ai.GeminiAiClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
@@ -34,9 +35,11 @@ import kotlin.coroutines.resume
 
 data class RxUiState(
     val isLoading: Boolean = false,
+    val isAiAnalyzing: Boolean = false,
     val capturedImageUri: Uri? = null,
     val items: List<PrescriptionItem> = emptyList(),
     val explanations: List<MedicineExplanation> = emptyList(),
+    val prescriptionSummaryBn: String? = null,
     val schedules: List<SlotSchedule> = emptyList(),
     val searchQuery: String = "",
     val searchSuggestions: List<String> = emptyList(),
@@ -76,7 +79,8 @@ class RxViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val decodeLatinRxUseCase: DecodeLatinRxUseCase,
     private val getMedicineInfoUseCase: GetMedicineInfoUseCase,
-    private val scheduleDoseAlarmsUseCase: ScheduleDoseAlarmsUseCase
+    private val scheduleDoseAlarmsUseCase: ScheduleDoseAlarmsUseCase,
+    private val geminiAiClient: GeminiAiClient
 ) : ViewModel() {
 
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -282,7 +286,7 @@ class RxViewModel @Inject constructor(
     }
 
     private fun loadExplanations() {
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(isLoading = true, isAiAnalyzing = true) }
         viewModelScope.launch {
             val items = _uiState.value.items
             val explanationsList = mutableListOf<MedicineExplanation>()
@@ -329,10 +333,18 @@ class RxViewModel @Inject constructor(
                 }
             }
 
+            // Generate overall AI Prescription Regimen Analysis
+            val medSummary = items.joinToString("\n") { 
+                "- ${it.brandName} (${it.genericName.ifBlank { "জেনেরিক" }}): ${it.timingSlotBn}, ${it.mealInstructionBn}, মেয়াদের দিন: ${it.durationDays.toString().toBengaliDigits()} দিন"
+            }
+            val prescriptionAi = geminiAiClient.explainPrescription(medicinesSummary = medSummary)
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    isAiAnalyzing = false,
                     explanations = explanationsList,
+                    prescriptionSummaryBn = prescriptionAi,
                     schedules = updatedSchedules
                 )
             }

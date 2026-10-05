@@ -7,6 +7,7 @@ import com.example.mediaware.core.voice.ConsultationAudioRecorder
 import com.example.mediaware.features.chamber.domain.model.DoctorQuestionItem
 import com.example.mediaware.features.chamber.domain.model.LabSummaryItem
 import com.example.mediaware.features.chamber.domain.model.PatientPresentationSummary
+import com.example.mediaware.core.common.ai.GeminiAiClient
 import com.example.mediaware.core.database.dao.UserProfileDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -75,7 +76,8 @@ sealed interface ChamberUiSideEffect {
 @HiltViewModel
 class ChamberViewModel @Inject constructor(
     private val audioRecorder: ConsultationAudioRecorder,
-    private val userProfileDao: UserProfileDao
+    private val userProfileDao: UserProfileDao,
+    private val geminiAiClient: GeminiAiClient
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChamberUiState())
@@ -111,6 +113,36 @@ class ChamberViewModel @Inject constructor(
                                 chronicConditionsBn = chronicText
                             )
                         )
+                    }
+
+                    // Dynamically generate AI Cheat Questions tailored to the patient
+                    launch {
+                        val symptomsList = if (profile.chronicConditions.isNotEmpty()) {
+                            profile.chronicConditions
+                        } else {
+                            listOf("সাধারণ স্বাস্থ্য পরীক্ষা ও পরামর্শ")
+                        }
+                        val (_, aiQuestions) = geminiAiClient.analyzeDiseaseAndSymptoms(
+                            symptoms = symptomsList,
+                            severity = 5,
+                            duration = "চলমান",
+                            chronicConditions = profile.chronicConditions,
+                            age = profile.age,
+                            gender = genderText
+                        )
+
+                        if (aiQuestions.isNotEmpty()) {
+                            val dynamicQuestionItems = aiQuestions.map { qText ->
+                                DoctorQuestionItem(
+                                    questionBn = qText,
+                                    categoryBn = "এআই প্রস্তাবিত চিট-প্রশ্ন"
+                                )
+                            }
+                            _uiState.update { state ->
+                                val userAdded = state.questions.filter { it.categoryBn == "রোগীর ব্যক্তিগত প্রশ্ন" }
+                                state.copy(questions = dynamicQuestionItems + userAdded)
+                            }
+                        }
                     }
                 }
             }
