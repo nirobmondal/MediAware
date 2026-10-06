@@ -2,6 +2,7 @@ package com.example.mediaware.core.common.settings
 
 import android.content.Context
 import android.media.AudioManager
+import android.media.RingtoneManager
 import android.media.ToneGenerator
 import android.speech.tts.TextToSpeech
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,9 +43,15 @@ class AppSettingsManager @Inject constructor(
         try {
             tts = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
-                    val result = tts?.setLanguage(Locale("bn", "BD"))
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        tts?.setLanguage(Locale.getDefault())
+                    val resultBd = tts?.setLanguage(Locale("bn", "BD"))
+                    if (resultBd == TextToSpeech.LANG_MISSING_DATA || resultBd == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        val resultBn = tts?.setLanguage(Locale("bn"))
+                        if (resultBn == TextToSpeech.LANG_MISSING_DATA || resultBn == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            val resultDef = tts?.setLanguage(Locale.getDefault())
+                            if (resultDef == TextToSpeech.LANG_MISSING_DATA || resultDef == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                tts?.setLanguage(Locale.US)
+                            }
+                        }
                     }
                     isTtsInitialized = true
                 }
@@ -76,13 +83,7 @@ class AppSettingsManager @Inject constructor(
     }
 
     fun playToggleFeedback(enabled: Boolean) {
-        try {
-            val toneType = if (enabled) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_PROP_BEEP2
-            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
-            toneGen.startTone(toneType, 180)
-        } catch (e: Exception) {
-            Timber.e(e, "ToneGenerator feedback failed")
-        }
+        playBeepSound(if (enabled) ToneGenerator.TONE_PROP_BEEP else ToneGenerator.TONE_PROP_BEEP2)
 
         val speechText = if (enabled) {
             "অডিও গাইডেন্স সক্রিয় করা হয়েছে"
@@ -95,14 +96,24 @@ class AppSettingsManager @Inject constructor(
     fun playAudioFeedback(textBn: String) {
         if (!_isAudioGuidanceEnabled.value) return
 
-        try {
-            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 75)
-            toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-        } catch (e: Exception) {
-            Timber.e(e, "ToneGenerator error")
-        }
-
+        playBeepSound(ToneGenerator.TONE_PROP_BEEP)
         speakText(textBn)
+    }
+
+    private fun playBeepSound(toneType: Int) {
+        try {
+            val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            toneGen.startTone(toneType, 220)
+        } catch (e: Exception) {
+            Timber.e(e, "ToneGenerator error, attempting Ringtone fallback")
+            try {
+                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val ringtone = RingtoneManager.getRingtone(context, notificationUri)
+                ringtone?.play()
+            } catch (re: Exception) {
+                Timber.e(re, "Ringtone playback error")
+            }
+        }
     }
 
     private fun speakText(text: String) {

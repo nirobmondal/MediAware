@@ -682,9 +682,14 @@ class GeminiAiClient @Inject constructor() {
               "triage_assessment": "লক্ষণসমূহের প্রাথমিক মূল্যায়ন ও পরামর্শ (বাংলায় ১-২ প্যারাগ্রাফে)।",
               "needs_doctor_visit": ${severity >= 4 || duration.contains("সপ্তাহ") || duration.contains("মাস")},
               "home_care_advice": "ডাক্তারের কাছে যাওয়ার আগ পর্যন্ত প্রাথমিক পরিচর্যা, বিশ্রাম বা খাদ্যাভ্যাসের নির্দেশিকা।",
+              "speaking_points": [
+                "ডাক্তারকে চেম্বারে প্রথমেই ৩০ সেকেন্ডে বলার ১ নম্বর সুনির্দিষ্ট পয়েন্ট (কখন শুরু, তীব্রতা ও লক্ষণ)",
+                "২ নম্বর পয়েন্ট (দৈনন্দিন জীবনে প্রভাব ও অনুভূত কষ্ট)",
+                "৩ নম্বর পয়েন্ট (পূর্ববর্তী রোগ ও বর্তমান অবস্থা)"
+              ],
               "what_to_show_doctor": [
                 "ডাক্তারকে দেখানোর মতো ১ নম্বর বিষয় (যেমন: পূর্বের অমুক টেস্ট রিপোর্ট বা বর্তমান ওষুধ)",
-                "২ নম্বর বিষয় (যেমন: কতদিন ধরে জ্বর বা ব্যথার তীব্রতা)",
+                "২ নম্বর বিষয়",
                 "৩ নম্বর বিষয়"
               ],
               "cheat_questions_for_doctor": [
@@ -709,6 +714,14 @@ class GeminiAiClient @Inject constructor() {
                 val homeCare = jsonObj.optString("home_care_advice", "পর্যাপ্ত বিশ্রাম নিন ও পরিমিত পানি পান করুন।")
                 val specialist = jsonObj.optString("suggested_specialist", "জেনারেল মেডিসিন বিশেষজ্ঞ")
 
+                val speakingList = mutableListOf<String>()
+                val spArr = jsonObj.optJSONArray("speaking_points")
+                if (spArr != null) {
+                    for (i in 0 until spArr.length()) {
+                        speakingList.add(spArr.getString(i))
+                    }
+                }
+
                 val showList = mutableListOf<String>()
                 val showArr = jsonObj.optJSONArray("what_to_show_doctor")
                 if (showArr != null) {
@@ -730,6 +743,11 @@ class GeminiAiClient @Inject constructor() {
                         triageAssessmentBn = assessment,
                         needsDoctorVisit = needsVisit,
                         homeCareAdviceBn = homeCare,
+                        speakingPoints = if (speakingList.isNotEmpty()) speakingList else listOf(
+                            "১. সমস্যা শুরু হয়েছে $duration আগে, অনুভূত তীব্রতা ১০ এর মধ্যে $severity।",
+                            "২. মূল অনুভূত লক্ষণ: $symptomsStr। দৈনন্দিন স্বাভাবিক কাজে বিঘ্ন ঘটছে।",
+                            "৩. দ্রুত আরোগ্য লাভে চিকিৎসকের সুনির্দিষ্ট নির্দেশনা প্রয়োজন।"
+                        ),
                         whatToShowDoctor = if (showList.isNotEmpty()) showList else listOf("বর্তমান ওষুধের প্রেসক্রিপশন", "লক্ষণ শুরুর সুনির্দিষ্ট সময় ও তীব্রতা"),
                         cheatQuestionsForDoctor = if (questionsList.isNotEmpty()) questionsList else listOf("আমার এই উপসর্গের প্রধান কারণ কী হতে পারে?", "আমার কি কোনো নির্দিষ্ট ল্যাব টেস্ট করানো প্রয়োজন?"),
                         suggestedSpecialistBn = specialist
@@ -745,6 +763,11 @@ class GeminiAiClient @Inject constructor() {
             triageAssessmentBn = "আপনার লক্ষণসমূহ পর্যালোচনায় দেখা গেছে যে উপসর্গগুলো নিয়ন্ত্রণের জন্য একজন চিকিৎসকের পরামর্শ নেওয়া উত্তম।",
             needsDoctorVisit = true,
             homeCareAdviceBn = "পর্যাপ্ত বিশ্রাম নিন, সহজপাচ্য পুষ্টিকর খাবার গ্রহণ করুন এবং কোনো ভারী কাজ এড়িয়ে চলুন।",
+            speakingPoints = listOf(
+                "১. সমস্যা শুরু হয়েছে $duration আগে, অনুভূত তীব্রতা ১০ এর মধ্যে $severity।",
+                "২. মূল সমস্যা: $symptomsStr। দৈনন্দিন জীবনে অস্বস্তি বাড়ছে।",
+                "৩. অতীতে কোনো জটিলতা থাকলে তা ডাক্তারের সামনে তুলে ধরা প্রয়োজন।"
+            ),
             whatToShowDoctor = listOf(
                 "পূর্বে প্রেসক্রাইব করা সকল চলমান ওষুধের তালিকা",
                 "সাম্প্রতিক কোনো প্যাথলজি বা ল্যাব টেস্টের রিপোর্ট",
@@ -788,6 +811,7 @@ data class SymptomConsultationPlanResult(
     val triageAssessmentBn: String,
     val needsDoctorVisit: Boolean,
     val homeCareAdviceBn: String,
+    val speakingPoints: List<String> = emptyList(),
     val whatToShowDoctor: List<String>,
     val cheatQuestionsForDoctor: List<String>,
     val suggestedSpecialistBn: String

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.mediaware.core.common.ai.GeminiAiClient
+import com.example.mediaware.core.common.alarm.FollowUpReminderScheduler
 import com.example.mediaware.core.common.base.BaseViewModel
 import com.example.mediaware.core.common.settings.AppSettingsManager
 import com.example.mediaware.core.database.dao.ConsultationDao
@@ -65,7 +66,8 @@ class HomeViewModel @Inject constructor(
     private val healthRecordDao: HealthRecordDao,
     private val geminiAiClient: GeminiAiClient,
     private val appSettingsManager: AppSettingsManager,
-    @ApplicationContext private val context: Context,
+    private val followUpReminderScheduler: FollowUpReminderScheduler,
+    @param:ApplicationContext private val context: Context,
     networkMonitor: NetworkMonitor
 ) : BaseViewModel<HomeUiState, HomeUiEvent, HomeSideEffect>(HomeUiState()) {
 
@@ -191,10 +193,16 @@ class HomeViewModel @Inject constructor(
                     val dateBn = SimpleDateFormat("d MMMM yyyy", Locale.forLanguageTag("bn")).format(Date(event.dateMillis)).toBengaliDigits()
                     val updated = entity.copy(
                         followUpDays = diffDays,
-                        followUpDateStringBn = "$dateBn ($diffDays দিন পর)"
+                        followUpDateStringBn = "$dateBn (${diffDays.toString().toBengaliDigits()} দিন পর)"
                     )
                     consultationDao.updateConsultation(updated)
-                    sendEffect(HomeSideEffect.ShowToast("পরবর্তী ভিজিট তারিখ আপডেট হয়েছে: $dateBn"))
+                    followUpReminderScheduler.scheduleFollowUpReminder(
+                        consultationId = entity.id,
+                        doctorName = entity.doctorName,
+                        followUpDateMillis = event.dateMillis,
+                        followUpReason = entity.followUpReasonBn
+                    )
+                    sendEffect(HomeSideEffect.ShowToast("পরবর্তী ভিজিট তারিখ ও রিমাইন্ডার নোটিফিকেশন সেট হয়েছে: $dateBn"))
                 }
             }
             HomeUiEvent.OnClearChat -> {

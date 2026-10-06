@@ -17,6 +17,9 @@
     <!-- Notification & vibration permissions -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".MediAwareApplication"
@@ -52,6 +55,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- ─── Follow-Up Visit Reminder Receiver ────────────────────── -->
+        <receiver
+            android:name="com.example.mediaware.core.common.alarm.FollowUpReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.mediaware.ACTION_FOLLOW_UP_REMINDER" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

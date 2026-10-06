@@ -2,6 +2,7 @@ package com.example.mediaware.features.consultation.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mediaware.core.common.alarm.FollowUpReminderScheduler
 import com.example.mediaware.core.database.dao.ConsultationDao
 import com.example.mediaware.core.database.entity.ConsultationEntity
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
@@ -52,7 +53,8 @@ sealed interface ConsultationSummarySideEffect {
 
 @HiltViewModel
 class ConsultationSummaryViewModel @Inject constructor(
-    private val consultationDao: ConsultationDao
+    private val consultationDao: ConsultationDao,
+    private val followUpReminderScheduler: FollowUpReminderScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConsultationSummaryUiState())
@@ -157,6 +159,12 @@ class ConsultationSummaryViewModel @Inject constructor(
         val dateBn = java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale.forLanguageTag("bn")).format(java.util.Date(followUpMillis)).toBengaliDigits()
 
         viewModelScope.launch {
+            followUpReminderScheduler.scheduleFollowUpReminder(
+                consultationId = currentSummary.id,
+                doctorName = currentSummary.doctorName,
+                followUpDateMillis = followUpMillis,
+                followUpReason = currentSummary.followUpReasonBn
+            )
             _sideEffect.send(
                 ConsultationSummarySideEffect.LaunchCalendarIntent(
                     title = title,
@@ -166,7 +174,7 @@ class ConsultationSummaryViewModel @Inject constructor(
             )
             _sideEffect.send(
                 ConsultationSummarySideEffect.ShowToast(
-                    "$dateBn তারিখের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
+                    "$dateBn তারিখের ফলো-আপ রিমাইন্ডার ও নোটিফিকেশন সেট করা হয়েছে।"
                 )
             )
         }

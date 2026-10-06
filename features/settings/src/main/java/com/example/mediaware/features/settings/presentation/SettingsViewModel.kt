@@ -79,6 +79,7 @@ class SettingsViewModel @Inject constructor(
                 appSettingsManager.setAudioGuidanceEnabled(event.enabled)
             }
             SettingsUiEvent.OnTestAudioGuidance -> {
+                sendEffect(SettingsSideEffect.ShowToast("অডিও গাইডেন্স পরীক্ষা চলছে..."))
                 appSettingsManager.playAudioFeedback("অডিও গাইডেন্স পরীক্ষা সফল হয়েছে। স্পিকার ও সাউন্ড সক্রিয় আছে।")
             }
             SettingsUiEvent.OnClearCacheClicked -> setState { copy(showClearCacheDialog = true) }

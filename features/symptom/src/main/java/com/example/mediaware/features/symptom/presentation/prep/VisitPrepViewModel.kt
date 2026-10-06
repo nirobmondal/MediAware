@@ -108,6 +108,12 @@ class VisitPrepViewModel @Inject constructor(
                 userProfileSummary = userSummary
             )
 
+            val updatedSpeakingPoints = if (planResult.speakingPoints.isNotEmpty()) {
+                planResult.speakingPoints
+            } else {
+                initialCard.doctorSpeakingPointsBn
+            }
+
             val updatedQuestions = if (planResult.cheatQuestionsForDoctor.isNotEmpty()) {
                 planResult.cheatQuestionsForDoctor
             } else {
@@ -115,6 +121,7 @@ class VisitPrepViewModel @Inject constructor(
             }
 
             val updatedCard = initialCard.copy(
+                doctorSpeakingPointsBn = updatedSpeakingPoints,
                 doctorQuestionsBn = updatedQuestions,
                 suggestedSpecialistBn = planResult.suggestedSpecialistBn
             )
@@ -129,7 +136,7 @@ class VisitPrepViewModel @Inject constructor(
                     title = "ভিজিট প্রস্তুতি: ${resolvedSymptoms.joinToString { it.nameBn }}",
                     summaryBn = planResult.triageAssessmentBn,
                     detailsJson = JSONObject().apply {
-                        put("speakingPoints", JSONArray(updatedCard.doctorSpeakingPointsBn))
+                        put("speakingPoints", JSONArray(updatedSpeakingPoints))
                         put("whatToShowDoctor", JSONArray(planResult.whatToShowDoctor))
                         put("cheatQuestions", JSONArray(updatedQuestions))
                         put("homeCareAdvice", planResult.homeCareAdviceBn)

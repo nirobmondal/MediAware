@@ -8,6 +8,7 @@ import com.example.mediaware.features.chamber.domain.model.DoctorQuestionItem
 import com.example.mediaware.features.chamber.domain.model.LabSummaryItem
 import com.example.mediaware.features.chamber.domain.model.PatientPresentationSummary
 import com.example.mediaware.core.common.ai.GeminiAiClient
+import com.example.mediaware.core.common.alarm.FollowUpReminderScheduler
 import com.example.mediaware.core.database.dao.ConsultationDao
 import com.example.mediaware.core.database.dao.HealthRecordDao
 import com.example.mediaware.core.database.dao.UserProfileDao
@@ -88,7 +89,8 @@ class ChamberViewModel @Inject constructor(
     private val userProfileDao: UserProfileDao,
     private val consultationDao: ConsultationDao,
     private val healthRecordDao: HealthRecordDao,
-    private val geminiAiClient: GeminiAiClient
+    private val geminiAiClient: GeminiAiClient,
+    private val followUpReminderScheduler: FollowUpReminderScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChamberUiState())
@@ -306,6 +308,16 @@ class ChamberViewModel @Inject constructor(
                     )
 
                     consultationDao.insertConsultation(entity)
+
+                    if (summaryResult.followUpDays > 0) {
+                        val targetMillis = now + (summaryResult.followUpDays.toLong() * 24L * 60L * 60L * 1000L)
+                        followUpReminderScheduler.scheduleFollowUpReminder(
+                            consultationId = entity.id,
+                            doctorName = entity.doctorName,
+                            followUpDateMillis = targetMillis,
+                            followUpReason = entity.followUpReasonBn
+                        )
+                    }
 
                     // Also synchronize into unified Health Memory
                     try {

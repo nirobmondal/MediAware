@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +26,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
+import com.example.mediaware.core.designsystem.theme.EmeraldGreen
+import com.example.mediaware.core.designsystem.theme.OceanBlue
+import com.example.mediaware.core.designsystem.theme.AiPurple
+import com.example.mediaware.core.designsystem.theme.CardBgTeal
+import com.example.mediaware.core.designsystem.theme.CardBgOcean
+import com.example.mediaware.core.designsystem.theme.CardBgMint
+import com.example.mediaware.core.designsystem.theme.CardBgPurple
+import com.example.mediaware.core.designsystem.theme.BorderTealSoft
+import com.example.mediaware.core.designsystem.theme.BorderOceanSoft
+import com.example.mediaware.core.designsystem.theme.BorderMintSoft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +80,7 @@ fun VisitPrepScreen(
                 actions = {
                     IconButton(onClick = { viewModel.onEvent(VisitPrepUiEvent.OnToggleTts) }) {
                         Icon(
-                            imageVector = if (uiState.isPlayingTts) Icons.Default.VolumeUp else Icons.Default.VolumeMute,
+                            imageVector = if (uiState.isPlayingTts) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeMute,
                             contentDescription = "অডিও প্লেয়ার",
                             tint = PrimaryTeal
                         )
@@ -163,11 +175,12 @@ fun VisitPrepScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Specialist Suggestion Badge
+                // Specialist Suggestion Card
                 card?.let { prep ->
                     Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFD4E3FF)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardBgOcean),
+                        border = BorderStroke(1.dp, BorderOceanSoft),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -178,29 +191,30 @@ fun VisitPrepScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF2B5B84)),
+                                    .size(40.dp)
+                                    .background(OceanBlue, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     Icons.Default.MedicalServices,
                                     contentDescription = null,
-                                    tint = Color.White
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(14.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "সুপারিশকৃত বিশেষজ্ঞ বিভাগ:",
-                                    style = MaterialTheme.typography.labelMedium.copy(color = Color(0xFF2B5B84))
+                                    text = "সুপারিশকৃত বিশেষজ্ঞ বিভাগ",
+                                    fontSize = 11.sp,
+                                    color = OceanBlue,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = prep.suggestedSpecialistBn,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF001B3E)
-                                    )
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -211,8 +225,8 @@ fun VisitPrepScreen(
                     // AI Symptoms & Disease Analysis Card
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
-                        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.4f)),
+                        colors = CardDefaults.cardColors(containerColor = CardBgTeal),
+                        border = BorderStroke(1.dp, BorderTealSoft),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -222,19 +236,25 @@ fun VisitPrepScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = null,
-                                        tint = PrimaryTeal,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "এআই লক্ষণ ও সম্ভাব্য স্বাস্থ্য বিশ্লেষণ",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrimaryTeal
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(PrimaryTeal, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
                                         )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "এআই লক্ষণ ও স্বাস্থ্য মূল্যায়ন",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 if (uiState.isAiAnalyzing) {
@@ -250,61 +270,79 @@ fun VisitPrepScreen(
 
                             Text(
                                 text = uiState.aiSymptomAnalysisBn ?: if (uiState.isAiAnalyzing) "জেমিনাই এআই আপনার লক্ষণগুলো বিশ্লেষণ করছে..." else "লক্ষণ পর্যালোচনা করা হচ্ছে...",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    lineHeight = 22.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // 30-Second Doctor Presentation Points
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4FBFB)),
-                        border = BorderStroke(1.5.dp, PrimaryTeal),
+                        colors = CardDefaults.cardColors(containerColor = CardBgMint),
+                        border = BorderStroke(1.dp, BorderMintSoft),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.RecordVoiceOver, contentDescription = null, tint = PrimaryTeal)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "৩০ সেকেন্ডে ডাক্তারকে যা বলবেন",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrimaryTeal
-                                        )
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(EmeraldGreen, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RecordVoiceOver,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            prep.doctorSpeakingPointsBn.forEach { point ->
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = point,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        lineHeight = 22.sp,
-                                        fontWeight = FontWeight.Normal
-                                    ),
-                                    modifier = Modifier.padding(vertical = 4.dp)
+                                    text = "৩০ সেকেন্ডে ডাক্তারকে যা বলবেন",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            prep.doctorSpeakingPointsBn.forEach { point ->
+                                Row(
+                                    modifier = Modifier.padding(vertical = 3.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Text(
+                                        text = "•",
+                                        fontWeight = FontWeight.Bold,
+                                        color = EmeraldGreen,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = point,
+                                        fontSize = 13.sp,
+                                        lineHeight = 18.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     // Saved to Health Memory Status Pill
                     if (uiState.isSavedToHealthMemory) {
                         Surface(
-                            color = PrimaryTeal.copy(alpha = 0.1f),
+                            color = PrimaryTeal.copy(alpha = 0.08f),
                             shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, BorderTealSoft),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -334,84 +372,112 @@ fun VisitPrepScreen(
                     if (showItems.isNotEmpty()) {
                         Card(
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            border = BorderStroke(1.2.dp, Color(0xFF80CBC4)),
+                            colors = CardDefaults.cardColors(containerColor = CardBgOcean),
+                            border = BorderStroke(1.dp, BorderOceanSoft),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.FolderShared,
-                                        contentDescription = null,
-                                        tint = PrimaryTeal
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(OceanBlue, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FolderShared,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Text(
                                         text = "ডাক্তারকে যা যা দেখাতে হবে",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrimaryTeal
-                                        )
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
                                 showItems.forEach { item ->
                                     Row(
-                                        modifier = Modifier.padding(vertical = 4.dp),
+                                        modifier = Modifier.padding(vertical = 3.dp),
                                         verticalAlignment = Alignment.Top
                                     ) {
                                         Text(
                                             text = "•",
                                             fontWeight = FontWeight.Bold,
-                                            color = PrimaryTeal,
+                                            color = OceanBlue,
                                             modifier = Modifier.padding(end = 8.dp)
                                         )
                                         Text(
                                             text = item,
-                                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp)
+                                            fontSize = 13.sp,
+                                            lineHeight = 18.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
                     }
 
                     // Targeted AI Doctor Cheat Questions (চিট-প্রশ্নাবলী)
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        border = BorderStroke(1.dp, Color(0xFFCFD9D9)),
+                        colors = CardDefaults.cardColors(containerColor = CardBgPurple),
+                        border = BorderStroke(1.dp, BorderTealSoft),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.QuestionAnswer, contentDescription = null, tint = Color(0xFF2B5B84))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "ডাক্তারকে জিজ্ঞেস করার এআই চিট-প্রশ্নাবলী",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2B5B84)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(AiPurple, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.QuestionAnswer,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
                                     )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "ডাক্তারকে জিজ্ঞেস করার এআই প্রশ্নাবলি",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Spacer(modifier = Modifier.height(10.dp))
                             val questionsToDisplay = uiState.aiCheatQuestions.ifEmpty { prep.doctorQuestionsBn }
-                            questionsToDisplay.forEachIndexed { index, question ->
+                            questionsToDisplay.forEach { question ->
                                 Row(
-                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    modifier = Modifier.padding(vertical = 3.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Text(
                                         text = "•",
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2B5B84),
+                                        color = AiPurple,
                                         modifier = Modifier.padding(end = 8.dp)
                                     )
                                     Text(
                                         text = question,
-                                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp)
+                                        fontSize = 13.sp,
+                                        lineHeight = 18.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
