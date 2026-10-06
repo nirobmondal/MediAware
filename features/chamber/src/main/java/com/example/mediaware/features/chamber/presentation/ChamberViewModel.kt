@@ -255,7 +255,7 @@ class ChamberViewModel @Inject constructor(
             )
         }
 
-        if (file != null && file.exists() && file.length() > 0) {
+        if (file != null && file.exists() && file.length() >= 3000L) {
             _uiState.update {
                 it.copy(
                     isSummarizing = true,
@@ -266,6 +266,12 @@ class ChamberViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     val summaryResult = geminiAiClient.summarizeConsultationAudio(file)
+
+                    if (summaryResult.actionItems.isEmpty() && summaryResult.summary.contains("কোনো স্পষ্ট কথোপকথন পাওয়া যায়নি")) {
+                        _uiState.update { it.copy(isSummarizing = false) }
+                        _sideEffects.send(ChamberUiSideEffect.ShowToast("অডিওতে কোনো স্পষ্ট কথোপকথন পাওয়া যায়নি। পুনরায় স্পষ্ট শব্দে রেকর্ড করুন।"))
+                        return@launch
+                    }
 
                     val now = System.currentTimeMillis()
                     val dateFormat = SimpleDateFormat("dd MMMM yyyy, hh:mm a", Locale.getDefault())
@@ -335,7 +341,7 @@ class ChamberViewModel @Inject constructor(
                 val msg = if (timedOut) {
                     "১৫ মিনিটের সীমা উত্তীর্ণ হওয়ায় রেকর্ডিং সফলভাবে সংরক্ষিত হয়েছে।"
                 } else {
-                    "পরামর্শ রেকর্ডিং সফলভাবে ভল্টে সংরক্ষিত হয়েছে।"
+                    "পর্যাপ্ত অডিও রেকর্ড হয়নি। অনুগ্রহ করে স্পষ্ট শব্দে রেকর্ড করুন।"
                 }
                 _sideEffects.send(ChamberUiSideEffect.ShowToast(msg))
             }

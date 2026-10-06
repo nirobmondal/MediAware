@@ -25,6 +25,7 @@ data class ConsultationSummaryUiState(
     val expandedConsultationId: String? = null,
     val selectedCategory: ActionItemCategory? = null,
     val scheduledCalendarIds: Set<String> = emptySet(),
+    val customFollowUpTimestampMap: Map<String, Long> = emptyMap(),
     val customFollowUpDaysMap: Map<String, Int> = emptyMap(),
     val toastMessage: String? = null
 )
@@ -34,6 +35,7 @@ sealed interface ConsultationSummaryUiEvent {
     data class OnToggleActionItem(val consultationId: String, val itemId: String) : ConsultationSummaryUiEvent
     data class OnSelectCategory(val category: ActionItemCategory?) : ConsultationSummaryUiEvent
     data class OnUpdateFollowUpDays(val consultationId: String, val days: Int) : ConsultationSummaryUiEvent
+    data class OnSetCustomDate(val consultationId: String, val dateMillis: Long) : ConsultationSummaryUiEvent
     data class OnScheduleCalendar(val consultationId: String) : ConsultationSummaryUiEvent
     data class OnDeleteConsultation(val consultationId: String) : ConsultationSummaryUiEvent
     data object OnDismissToast : ConsultationSummaryUiEvent
@@ -89,8 +91,21 @@ class ConsultationSummaryViewModel @Inject constructor(
                 _uiState.update { it.copy(selectedCategory = event.category) }
             }
             is ConsultationSummaryUiEvent.OnUpdateFollowUpDays -> {
+                val targetMillis = System.currentTimeMillis() + (event.days.toLong() * 24L * 60L * 60L * 1000L)
                 _uiState.update { state ->
-                    state.copy(customFollowUpDaysMap = state.customFollowUpDaysMap + (event.consultationId to event.days))
+                    state.copy(
+                        customFollowUpDaysMap = state.customFollowUpDaysMap + (event.consultationId to event.days),
+                        customFollowUpTimestampMap = state.customFollowUpTimestampMap + (event.consultationId to targetMillis)
+                    )
+                }
+            }
+            is ConsultationSummaryUiEvent.OnSetCustomDate -> {
+                val diffDays = ((event.dateMillis - System.currentTimeMillis()) / (24L * 60L * 60L * 1000L)).coerceAtLeast(1L).toInt()
+                _uiState.update { state ->
+                    state.copy(
+                        customFollowUpTimestampMap = state.customFollowUpTimestampMap + (event.consultationId to event.dateMillis),
+                        customFollowUpDaysMap = state.customFollowUpDaysMap + (event.consultationId to diffDays)
+                    )
                 }
             }
             is ConsultationSummaryUiEvent.OnScheduleCalendar -> {
@@ -128,8 +143,9 @@ class ConsultationSummaryViewModel @Inject constructor(
 
     private fun scheduleCalendar(consultationId: String) {
         val currentSummary = _uiState.value.consultations.find { it.id == consultationId } ?: return
-        val chosenDays = _uiState.value.customFollowUpDaysMap[consultationId] ?: currentSummary.followUpDays
-        val followUpMillis = System.currentTimeMillis() + (chosenDays.toLong() * 24L * 60L * 60L * 1000L)
+        val customTimestamp = _uiState.value.customFollowUpTimestampMap[consultationId]
+        val chosenDays = _uiState.value.customFollowUpDaysMap[consultationId] ?: if (currentSummary.followUpDays > 0) currentSummary.followUpDays else 7
+        val followUpMillis = customTimestamp ?: (System.currentTimeMillis() + (chosenDays.toLong().coerceAtLeast(1L) * 24L * 60L * 60L * 1000L))
         val title = "ডাক্তার ফলো-আপ ভিজিট: ${currentSummary.doctorName}"
         val description = "ফলো-আপ কারণ: ${currentSummary.followUpReasonBn}\n\nকরণীয়:\n" +
                 currentSummary.actionItems.joinToString("\n") { "• ${it.task}" }
@@ -137,6 +153,8 @@ class ConsultationSummaryViewModel @Inject constructor(
         _uiState.update {
             it.copy(scheduledCalendarIds = it.scheduledCalendarIds + consultationId)
         }
+
+        val dateBn = java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale.forLanguageTag("bn")).format(java.util.Date(followUpMillis)).toBengaliDigits()
 
         viewModelScope.launch {
             _sideEffect.send(
@@ -148,7 +166,7 @@ class ConsultationSummaryViewModel @Inject constructor(
             )
             _sideEffect.send(
                 ConsultationSummarySideEffect.ShowToast(
-                    "${chosenDays.toString().toBengaliDigits()} দিন পরের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
+                    "$dateBn তারিখের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
                 )
             )
         }

@@ -1,6 +1,7 @@
 package com.example.mediaware.features.symptom.presentation.select
 
 import com.example.mediaware.core.common.base.BaseViewModel
+import com.example.mediaware.features.symptom.domain.model.Symptom
 import com.example.mediaware.features.symptom.domain.repository.SymptomCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,6 +20,7 @@ class SymptomSelectViewModel @Inject constructor() :
             is SymptomSelectUiEvent.OnSearchQueryChanged -> filterSymptoms(event.query)
             is SymptomSelectUiEvent.OnSymptomToggled -> toggleSymptom(event.symptomId)
             is SymptomSelectUiEvent.OnRemoveSelectedSymptom -> removeSymptom(event.symptomId)
+            is SymptomSelectUiEvent.OnAddCustomSymptom -> addCustomSymptom(event.symptomName)
             SymptomSelectUiEvent.OnToggleVoiceInput -> {
                 val nextState = !uiState.value.isListeningVoice
                 setState { copy(isListeningVoice = nextState) }
@@ -140,8 +142,52 @@ class SymptomSelectViewModel @Inject constructor() :
 
         if (matchedIds.isNotEmpty()) {
             sendEffect(SymptomSelectSideEffect.ShowToast("${matchedIds.size}টি লক্ষণ চিহ্নিত হয়েছে: \"$transcript\""))
-        } else {
-            sendEffect(SymptomSelectSideEffect.ShowToast("\"$transcript\" সম্পর্কিত লক্ষণ খুঁজুন"))
+        } else if (transcript.isNotBlank()) {
+            addCustomSymptom(transcript.trim())
         }
+    }
+
+    private fun addCustomSymptom(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+
+        val existing = uiState.value.availableSymptoms.find {
+            it.nameBn.equals(trimmed, ignoreCase = true)
+        }
+
+        if (existing != null) {
+            val updated = uiState.value.selectedSymptomIds + existing.id
+            setState {
+                copy(
+                    selectedSymptomIds = updated,
+                    searchQuery = "",
+                    filteredSymptoms = availableSymptoms
+                )
+            }
+            sendEffect(SymptomSelectSideEffect.ShowToast("\"${existing.nameBn}\" নির্বাচিত হয়েছে"))
+            return
+        }
+
+        val customId = "custom_${trimmed}"
+        val newSymptom = Symptom(
+            id = customId,
+            nameBn = trimmed,
+            anatomicalRegionBn = "কাস্টম লক্ষণ",
+            isRedFlagPotential = false,
+            iconName = "healing"
+        )
+
+        val updatedAvailable = uiState.value.availableSymptoms + newSymptom
+        val updatedSelected = uiState.value.selectedSymptomIds + customId
+
+        setState {
+            copy(
+                availableSymptoms = updatedAvailable,
+                filteredSymptoms = updatedAvailable,
+                selectedSymptomIds = updatedSelected,
+                searchQuery = ""
+            )
+        }
+        sendEffect(SymptomSelectSideEffect.ShowToast("\"$trimmed\" লক্ষণটি যোগ করা হয়েছে"))
     }
 }

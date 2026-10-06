@@ -256,7 +256,7 @@ class GeminiAiClient @Inject constructor() {
      * Takes an audio file, sends to Gemini 3.5/Flash, and extracts structured clinical summary.
      */
     suspend fun summarizeConsultationAudio(audioFile: java.io.File): ConsultationAudioSummaryResult = withContext(Dispatchers.IO) {
-        if (!audioFile.exists() || audioFile.length() == 0L) {
+        if (!audioFile.exists() || audioFile.length() < 3000L) {
             return@withContext getConsultationAudioFallback()
         }
 
@@ -325,9 +325,9 @@ class GeminiAiClient @Inject constructor() {
                 return@withContext ConsultationAudioSummaryResult(
                     doctorName = docName,
                     summary = summary,
-                    actionItems = actionsList.ifEmpty { getDefaultConsultationActions() },
+                    actionItems = actionsList,
                     pendingQuestions = questionsList,
-                    followUpDays = if (followUpDays > 0) followUpDays else 15,
+                    followUpDays = followUpDays,
                     followUpReason = followUpReason
                 )
             }
@@ -543,19 +543,11 @@ class GeminiAiClient @Inject constructor() {
     private fun getConsultationAudioFallback(): ConsultationAudioSummaryResult {
         return ConsultationAudioSummaryResult(
             doctorName = "চিকিৎসক",
-            summary = "ডাক্তারের সাথে সফলভাবে পরামর্শ সম্পন্ন হয়েছে। চিকিৎসকের দেওয়া নিয়মাবলী মেনে ওষুধ সেবন করুন এবং নির্দেশিত পথ্য বজায় রাখুন।",
-            actionItems = getDefaultConsultationActions(),
-            pendingQuestions = listOf("ওষুধের কোনো পার্শ্বপ্রতিক্রিয়া দেখা দিলে তাৎক্ষণিক করণীয় কী?"),
-            followUpDays = 15,
-            followUpReason = "শারীরিক উন্নতি ও রক্তচাপ/সুগার নিরীক্ষণ"
-        )
-    }
-
-    private fun getDefaultConsultationActions(): List<ConsultationAudioActionItem> {
-        return listOf(
-            ConsultationAudioActionItem(task = "প্রেসক্রিপশন অনুযায়ী নিয়মিত সময়ে ওষুধ সেবন করুন", category = "MEDICATION"),
-            ConsultationAudioActionItem(task = "প্রয়োজনীয় ল্যাব টেস্ট সম্পন্ন করে রিপোর্ট সংরক্ষণ করুন", category = "TEST"),
-            ConsultationAudioActionItem(task = "পরিমিত পানি পান ও স্বাস্থ্যকর খাদ্যাভ্যাস মেনে চলুন", category = "LIFESTYLE")
+            summary = "অডিও রেকর্ডিংয়ে কোনো স্পষ্ট কথোপকথন পাওয়া যায়নি। ডাক্তারের সাথে আলোচনার সময় স্পষ্ট শব্দে পুনরায় রেকর্ড করুন। কোনো স্বয়ংক্রিয় প্রেসক্রিপশন বা পরামর্শ তৈরি করা হয়নি।",
+            actionItems = emptyList(),
+            pendingQuestions = emptyList(),
+            followUpDays = 0,
+            followUpReason = ""
         )
     }
 

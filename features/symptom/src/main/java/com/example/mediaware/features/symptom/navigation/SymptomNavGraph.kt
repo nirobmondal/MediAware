@@ -119,9 +119,6 @@ fun NavGraphBuilder.symptomGraph(
             symptomIds = ids,
             severity = severity,
             durationBn = duration,
-            onNavigateToTestPrep = {
-                navController.navigate(SymptomRoutes.TEST_PREP)
-            },
             onNavigateToHome = onNavigateToHome,
             onNavigateBack = {
                 navController.popBackStack()

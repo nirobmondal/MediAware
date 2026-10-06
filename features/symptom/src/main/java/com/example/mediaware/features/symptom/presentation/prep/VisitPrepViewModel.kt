@@ -8,6 +8,7 @@ import com.example.mediaware.core.database.dao.HealthRecordDao
 import com.example.mediaware.core.database.entity.HealthRecordEntity
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
 import com.example.mediaware.core.domain.repository.UserRepository
+import com.example.mediaware.features.symptom.domain.model.Symptom
 import com.example.mediaware.features.symptom.domain.repository.SymptomCatalog
 import com.example.mediaware.features.symptom.domain.usecase.GenerateVisitPrepUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,9 +46,6 @@ class VisitPrepViewModel @Inject constructor(
                     sendEffect(VisitPrepSideEffect.ShowToast("অডিও চালু হয়েছে: ডাক্তারের কাছে বলার পয়েন্টসমূহ"))
                 }
             }
-            VisitPrepUiEvent.OnNavigateToTestPrep -> {
-                sendEffect(VisitPrepSideEffect.NavigateToTestPrep)
-            }
             VisitPrepUiEvent.OnFinishAndGoHome -> {
                 sendEffect(VisitPrepSideEffect.NavigateToHome)
             }
@@ -59,7 +57,15 @@ class VisitPrepViewModel @Inject constructor(
             setState { copy(isLoading = true, isAiAnalyzing = true) }
             val profile = userRepository.getUserProfileFlow().firstOrNull()
             val catalog = SymptomCatalog.ALL_SYMPTOMS.associateBy { it.id }
-            val resolvedSymptoms = symptomIds.mapNotNull { catalog[it] }
+            val resolvedSymptoms = symptomIds.map { id ->
+                catalog[id] ?: Symptom(
+                    id = id,
+                    nameBn = id.removePrefix("custom_"),
+                    anatomicalRegionBn = "লক্ষণ",
+                    isRedFlagPotential = false,
+                    iconName = "healing"
+                )
+            }
 
             val initialCard = generateVisitPrepUseCase(
                 userProfile = profile,

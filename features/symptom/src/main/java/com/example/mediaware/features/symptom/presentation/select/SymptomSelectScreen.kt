@@ -216,6 +216,34 @@ fun SymptomSelectScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            if (uiState.searchQuery.isNotBlank() && uiState.filteredSymptoms.none { it.nameBn.equals(uiState.searchQuery.trim(), ignoreCase = true) }) {
+                Card(
+                    onClick = { viewModel.onEvent(SymptomSelectUiEvent.OnAddCustomSymptom(uiState.searchQuery)) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = PrimaryTeal.copy(alpha = 0.08f)),
+                    border = BorderStroke(1.dp, PrimaryTeal),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.AddCircleOutline, contentDescription = "যোগ করুন", tint = PrimaryTeal)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "\"${uiState.searchQuery.trim()}\" নতুন লক্ষণ হিসেবে যোগ করুন",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryTeal
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
             // Voice Recognition Helper Pill Bar
             Card(
                 onClick = launchVoiceSearch,

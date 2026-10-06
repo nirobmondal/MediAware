@@ -22,6 +22,7 @@ sealed interface SymptomSelectUiEvent : ViewEvent {
     data object OnStartListeningVoice : SymptomSelectUiEvent
     data object OnStopListeningVoice : SymptomSelectUiEvent
     data class OnVoiceTranscriptReceived(val text: String) : SymptomSelectUiEvent
+    data class OnAddCustomSymptom(val symptomName: String) : SymptomSelectUiEvent
     data object OnProceedToFollowup : SymptomSelectUiEvent
 }
 

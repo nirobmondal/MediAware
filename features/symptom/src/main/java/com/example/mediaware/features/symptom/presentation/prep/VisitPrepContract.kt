@@ -21,12 +21,10 @@ data class VisitPrepUiState(
 sealed interface VisitPrepUiEvent : ViewEvent {
     data class GenerateCard(val symptomIds: List<String>, val severity: Int, val durationBn: String) : VisitPrepUiEvent
     data object OnToggleTts : VisitPrepUiEvent
-    data object OnNavigateToTestPrep : VisitPrepUiEvent
     data object OnFinishAndGoHome : VisitPrepUiEvent
 }
 
 sealed interface VisitPrepSideEffect : ViewSideEffect {
-    data object NavigateToTestPrep : VisitPrepSideEffect
     data object NavigateToHome : VisitPrepSideEffect
     data class ShowToast(val messageBn: String) : VisitPrepSideEffect
 }

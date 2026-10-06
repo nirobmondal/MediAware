@@ -32,7 +32,6 @@ fun VisitPrepScreen(
     severity: Int,
     durationBn: String,
     viewModel: VisitPrepViewModel = hiltViewModel(),
-    onNavigateToTestPrep: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -46,7 +45,6 @@ fun VisitPrepScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                VisitPrepSideEffect.NavigateToTestPrep -> onNavigateToTestPrep()
                 VisitPrepSideEffect.NavigateToHome -> onNavigateToHome()
                 is VisitPrepSideEffect.ShowToast -> Toast.makeText(context, effect.messageBn, Toast.LENGTH_SHORT).show()
             }
@@ -88,41 +86,23 @@ fun VisitPrepScreen(
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(16.dp)
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = { viewModel.onEvent(VisitPrepUiEvent.OnFinishAndGoHome) },
                             modifier = Modifier
-                                .weight(1f)
-                                .height(50.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("হোম", fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Button(
-                            onClick = { viewModel.onEvent(VisitPrepUiEvent.OnNavigateToTestPrep) },
-                            modifier = Modifier
-                                .weight(2f)
+                                .fillMaxWidth()
                                 .height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Science,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "টেস্ট প্রস্তুতি দেখুন",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                text = "প্রস্তুতি সম্পন্ন (হোমে যান)",
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
