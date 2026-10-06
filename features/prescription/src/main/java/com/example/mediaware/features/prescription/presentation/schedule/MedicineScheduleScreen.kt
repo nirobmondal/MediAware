@@ -70,6 +70,7 @@ fun MedicineScheduleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
                 ) {
                     Button(
@@ -87,7 +88,7 @@ fun MedicineScheduleScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "🔔 অ্যালার্ম চালু ও সংরক্ষণ করুন",
+                            text = "অ্যালার্ম চালু ও সংরক্ষণ করুন",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )

@@ -151,6 +151,16 @@ class HomeViewModel @Inject constructor(
                     processImageForDocumentAnalysis(image)
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to load input image from uri: ${event.uriString}")
+                    _chatState.update {
+                        it.copy(
+                            isScanningDocument = false,
+                            isAiThinking = false,
+                            chatMessages = it.chatMessages + ChatMessage(
+                                text = "ছবি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+                                isFromUser = false
+                            )
+                        )
+                    }
                 }
             }
             HomeUiEvent.OnClearChat -> {
@@ -218,10 +228,29 @@ class HomeViewModel @Inject constructor(
             }
 
             // Perform RAG analysis with WHO + DGHS Guidelines
-            val ragResult = geminiAiClient.analyzeDocumentWithRag(
-                ocrText = extractedOcrText,
-                userContext = userContext
-            )
+            val ragResult = try {
+                geminiAiClient.analyzeDocumentWithRag(
+                    ocrText = extractedOcrText,
+                    userContext = userContext
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "RAG analysis failed")
+                null
+            }
+
+            if (ragResult == null) {
+                _chatState.update {
+                    it.copy(
+                        isScanningDocument = false,
+                        isAiThinking = false,
+                        chatMessages = it.chatMessages + ChatMessage(
+                            text = "ডকুমেন্টটি বিশ্লেষণ করতে সমস্যা হয়েছে। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।",
+                            isFromUser = false
+                        )
+                    )
+                }
+                return@launch
+            }
 
             // Persist the verified analysis into Room SQLite Health Memory
             try {

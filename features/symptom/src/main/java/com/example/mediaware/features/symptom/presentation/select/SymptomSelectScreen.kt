@@ -80,30 +80,37 @@ fun SymptomSelectScreen(
         bottomBar = {
             Surface(
                 shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { viewModel.onEvent(SymptomSelectUiEvent.OnProceedToFollowup) },
-                    enabled = uiState.selectedSymptomIds.isNotEmpty(),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
                 ) {
-                    val countText = uiState.selectedSymptomIds.size.toString().toBengaliDigits()
-                    Text(
-                        text = if (uiState.selectedSymptomIds.isNotEmpty()) {
-                            "পরবর্তী ধাপ ($countText টি বাছাইকৃত)"
-                        } else {
-                            "কমপক্ষে একটি লক্ষণ নির্বাচন করুন"
-                        },
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    Button(
+                        onClick = { viewModel.onEvent(SymptomSelectUiEvent.OnProceedToFollowup) },
+                        enabled = uiState.selectedSymptomIds.isNotEmpty(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
+                    ) {
+                        val countText = uiState.selectedSymptomIds.size.toString().toBengaliDigits()
+                        Text(
+                            text = if (uiState.selectedSymptomIds.isNotEmpty()) {
+                                "পরবর্তী ($countText)"
+                            } else {
+                                "লক্ষণ নির্বাচন করুন"
+                            },
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

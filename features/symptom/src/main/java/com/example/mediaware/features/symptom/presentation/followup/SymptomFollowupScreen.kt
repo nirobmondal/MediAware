@@ -72,24 +72,31 @@ fun SymptomFollowupScreen(
         bottomBar = {
             Surface(
                 shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { viewModel.onEvent(SymptomFollowupUiEvent.OnEvaluateAndProceed) },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
                 ) {
-                    Text(
-                        text = "যাচাই করুন ও এগিয়ে যান",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    Button(
+                        onClick = { viewModel.onEvent(SymptomFollowupUiEvent.OnEvaluateAndProceed) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
+                    ) {
+                        Text(
+                            text = "এগিয়ে যান",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -106,12 +113,13 @@ fun SymptomFollowupScreen(
             // Selected symptoms summary card
             Card(
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE6F7F7)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F9F8)),
+                border = BorderStroke(1.dp, Color(0xFFB2DFDB)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = PrimaryTeal)
+                        Icon(Icons.Default.Info, contentDescription = null, tint = PrimaryTeal, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "বাছাইকৃত লক্ষণসমূহ:",
@@ -121,7 +129,7 @@ fun SymptomFollowupScreen(
                             )
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = uiState.selectedSymptoms.joinToString(" • ") { it.nameBn },
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
@@ -129,11 +137,11 @@ fun SymptomFollowupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // 1. Duration Selection
             Text(
-                text = "১. এই লক্ষণগুলো কতদিন ধরে অনুভব করছেন?",
+                text = "কতদিন ধরে অনুভব করছেন?",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
             )
             Spacer(modifier = Modifier.height(10.dp))
@@ -162,11 +170,11 @@ fun SymptomFollowupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // 2. Severity Slider (1-10 in Bengali)
             Text(
-                text = "২. কষ্টের তীব্রতা কতখানি? (১ থেকে ১০ এর স্কেলে)",
+                text = "কষ্টের তীব্রতা কতখানি?",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
             )
             Spacer(modifier = Modifier.height(6.dp))

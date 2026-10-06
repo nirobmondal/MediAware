@@ -405,7 +405,7 @@ fun TitrationItemRow(titration: TitrationRecord) {
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${titration.previousDose}  ➔  ${titration.newDose}",
+                text = "${titration.previousDose} -> ${titration.newDose}",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF006A6A)
@@ -481,7 +481,7 @@ fun AdherenceRecordRow(
                     ),
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    Text("✓ গৃহীত", fontSize = 11.sp, color = Color(0xFF2E7D32))
+                    Text("গৃহীত", fontSize = 11.sp, color = Color(0xFF2E7D32))
                 }
 
                 OutlinedButton(
@@ -492,7 +492,7 @@ fun AdherenceRecordRow(
                     ),
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    Text("✗ মিস", fontSize = 11.sp, color = Color(0xFFBA1A1A))
+                    Text("মিস", fontSize = 11.sp, color = Color(0xFFBA1A1A))
                 }
 
                 OutlinedButton(

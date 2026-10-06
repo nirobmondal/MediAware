@@ -114,7 +114,7 @@ fun EmergencyAlertScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "🚨 জরুরি সতর্কতা!",
+                    text = "জরুরি সতর্কতা!",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White

@@ -42,3 +42,31 @@ val OnClinicalCaution = Color(0xFF331C00)
 val ClinicalCritical = Color(0xFFBA1A1A)
 val ClinicalCriticalContainer = Color(0xFFFFDAD6)
 val OnClinicalCritical = Color(0xFF410002)
+
+// Colorful Healthcare Accents & Pastels
+val EmeraldGreen = Color(0xFF00897B)
+val EmeraldGreenContainer = Color(0xFFE0F2F1)
+val OceanBlue = Color(0xFF0288D1)
+val OceanBlueContainer = Color(0xFFE1F5FE)
+val CoralRed = Color(0xFFD32F2F)
+val CoralRedContainer = Color(0xFFFFEBEE)
+val WarmAmber = Color(0xFFF57C00)
+val WarmAmberContainer = Color(0xFFFFF3E0)
+val AiPurple = Color(0xFF673AB7)
+val AiPurpleContainer = Color(0xFFEDE7F6)
+
+// Elevated Card Container Backgrounds
+val CardBgTeal = Color(0xFFF0F9F8)
+val CardBgOcean = Color(0xFFF1F8FD)
+val CardBgMint = Color(0xFFF1F8F4)
+val CardBgAmber = Color(0xFFFFF8E7)
+val CardBgRose = Color(0xFFFDF2F2)
+val CardBgPurple = Color(0xFFF6F3FB)
+
+// Border Accents
+val BorderTealSoft = Color(0xFFB2DFDB)
+val BorderOceanSoft = Color(0xFFB3E5FC)
+val BorderMintSoft = Color(0xFFC8E6C9)
+val BorderAmberSoft = Color(0xFFFFE082)
+val BorderRoseSoft = Color(0xFFFFCDD2)
+

@@ -68,7 +68,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("💊 $titleBn")
+            .setContentTitle(titleBn)
             .setContentText(instructionBn)
             .setStyle(NotificationCompat.BigTextStyle().bigText(instructionBn))
             .setPriority(NotificationCompat.PRIORITY_MAX)

@@ -221,7 +221,7 @@ fun TestPrepGuideScreen(
                                 Icon(Icons.Default.AlarmAdd, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "${guide.recommendedFastingHours.toString().toBengaliDigits()} ঘণ্টার ফাস্টিং অ্যালার্ম সেট করুন ⏰",
+                                    text = "${guide.recommendedFastingHours.toString().toBengaliDigits()} ঘণ্টার ফাস্টিং অ্যালার্ম সেট করুন",
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                                 )
                             }

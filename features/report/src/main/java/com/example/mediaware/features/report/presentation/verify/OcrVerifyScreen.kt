@@ -79,28 +79,35 @@ fun OcrVerifyScreen(
         bottomBar = {
             Surface(
                 shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { viewModel.onEvent(OcrVerifyUiEvent.OnConfirmAndAnalyze) },
-                    enabled = uiState.labItems.isNotEmpty(),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryTeal,
-                        disabledContainerColor = Color(0xFFCFD9D9)
-                    )
                 ) {
-                    Text(
-                        text = if (uiState.labItems.isNotEmpty()) "মান সঠিক আছে, বিশ্লেষণ করুন" else "কোনো টেস্ট মান নেই (যোগ করুন)",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    Button(
+                        onClick = { viewModel.onEvent(OcrVerifyUiEvent.OnConfirmAndAnalyze) },
+                        enabled = uiState.labItems.isNotEmpty(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryTeal,
+                            disabledContainerColor = Color(0xFFCFD9D9)
                         )
-                    )
+                    ) {
+                        Text(
+                            text = if (uiState.labItems.isNotEmpty()) "মান সঠিক আছে, বিশ্লেষণ করুন" else "কোনো টেস্ট মান নেই (যোগ করুন)",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        )
+                    }
                 }
             }
         }

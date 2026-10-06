@@ -69,6 +69,7 @@ fun MedicineExplainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
                 ) {
                     Button(
@@ -186,7 +187,7 @@ fun MedicineExplainScreen(
                     onPlayAudio = {
                         Toast.makeText(
                             context,
-                            "🔊 অডিও বিবরণ: ${explanation.banglaName} - ${explanation.primaryPurposeBn}",
+                            "অডিও বিবরণ: ${explanation.banglaName} - ${explanation.primaryPurposeBn}",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -228,7 +229,12 @@ fun MedicineExplanationCard(
                             .background(PrimaryTeal.copy(alpha = 0.15f), RoundedCornerShape(10.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("💊", fontSize = 20.sp)
+                        Icon(
+                            imageVector = Icons.Default.Medication,
+                            contentDescription = null,
+                            tint = PrimaryTeal,
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {

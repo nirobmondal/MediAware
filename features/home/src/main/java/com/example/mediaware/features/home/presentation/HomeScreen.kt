@@ -1,8 +1,17 @@
 package com.example.mediaware.features.home.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import timber.log.Timber
+import java.io.File
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -22,6 +31,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,6 +45,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bloodtype
@@ -42,6 +54,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.HistoryEdu
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MedicalInformation
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Mic
@@ -49,6 +62,7 @@ import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Warning
@@ -92,6 +106,19 @@ import com.example.mediaware.core.database.entity.HealthRecordEntity
 import com.example.mediaware.core.designsystem.component.MediAwareBottomNavBar
 import com.example.mediaware.core.designsystem.component.MediAwareNavTab
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
+import com.example.mediaware.core.designsystem.theme.EmeraldGreen
+import com.example.mediaware.core.designsystem.theme.OceanBlue
+import com.example.mediaware.core.designsystem.theme.WarmAmber
+import com.example.mediaware.core.designsystem.theme.AiPurple
+import com.example.mediaware.core.designsystem.theme.CardBgTeal
+import com.example.mediaware.core.designsystem.theme.CardBgOcean
+import com.example.mediaware.core.designsystem.theme.CardBgMint
+import com.example.mediaware.core.designsystem.theme.CardBgAmber
+import com.example.mediaware.core.designsystem.theme.CardBgPurple
+import com.example.mediaware.core.designsystem.theme.BorderTealSoft
+import com.example.mediaware.core.designsystem.theme.BorderOceanSoft
+import com.example.mediaware.core.designsystem.theme.BorderMintSoft
+import com.example.mediaware.core.designsystem.theme.BorderAmberSoft
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,8 +185,6 @@ fun HomeScreen(
                     when (tab) {
                         MediAwareNavTab.HOME -> { /* Already on Home */ }
                         MediAwareNavTab.SYMPTOMS -> onNavigateToSymptomSelect()
-                        MediAwareNavTab.REPORT -> onNavigateToReportCapture()
-                        MediAwareNavTab.REMINDERS -> onNavigateToReminders()
                         MediAwareNavTab.SETTINGS -> onNavigateToSettings()
                     }
                 }
@@ -185,6 +210,16 @@ fun HomeScreen(
                 PatientProfileHeaderCard(uiState = uiState)
             }
 
+            // Quick Service Actions Grid (Prescription, Lab Report, Medication, Timeline)
+            item {
+                QuickActionShortcuts(
+                    onNavigateToPrescription = onNavigateToPrescription,
+                    onNavigateToReportCapture = onNavigateToReportCapture,
+                    onNavigateToMedicineHistory = onNavigateToMedicineHistory,
+                    onNavigateToTimeline = onNavigateToTimeline
+                )
+            }
+
             // Doctor Consultation Audio Recording & Guideline Card
             item {
                 Card(
@@ -192,8 +227,8 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clickable(onClick = onNavigateToChamberHub),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = PrimaryTeal.copy(alpha = 0.08f)),
-                    border = BorderStroke(1.5.dp, PrimaryTeal.copy(alpha = 0.35f))
+                    colors = CardDefaults.cardColors(containerColor = CardBgTeal),
+                    border = BorderStroke(1.2.dp, BorderTealSoft)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -249,12 +284,12 @@ fun HomeScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "ডাক্তারের সাথে সাক্ষাতের সময় কথপোকথন রেকর্ড করুন। আমাদের জেমিনি এআই স্বয়ংক্রিয়ভাবে প্রেসক্রিপশন ও পরামর্শের তারিখভিত্তিক সারাংশ ও কর্মপরিকল্পনা তৈরি করবে।",
+                            text = "চেম্বারে ডাক্তারের পরামর্শ রেকর্ড করুন ও সহজ এআই সারাংশ পান।",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 17.sp
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -267,8 +302,8 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clickable(onClick = onNavigateToSymptomSelect),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(1.2.dp, Color(0xFFB0BEC5))
+                    colors = CardDefaults.cardColors(containerColor = CardBgMint),
+                    border = BorderStroke(1.2.dp, BorderMintSoft)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -283,13 +318,13 @@ fun HomeScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(42.dp)
-                                        .background(Color(0xFF2E7D32).copy(alpha = 0.12f), CircleShape),
+                                        .background(EmeraldGreen, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Healing,
                                         contentDescription = null,
-                                        tint = Color(0xFF2E7D32),
+                                        tint = Color.White,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -304,14 +339,14 @@ fun HomeScreen(
                                     Text(
                                         text = "লক্ষণভিত্তিক প্রশ্নাবলি ও পরামর্শ",
                                         fontSize = 12.sp,
-                                        color = Color(0xFF2E7D32),
+                                        color = EmeraldGreen,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
 
                             Surface(
-                                color = Color(0xFF2E7D32),
+                                color = EmeraldGreen,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
@@ -324,12 +359,12 @@ fun HomeScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "আপনার শারীরিক সমস্যা নির্বাচন করুন। এআই স্বাস্থ্য মেমোরি বিশ্লেষণ করে ডাক্তারকে কী দেখাতে হবে এবং কী কী প্রশ্ন করতে হবে তার চিট-শিট তৈরি করে দেবে।",
+                            text = "শারীরিক সমস্যা জানিয়ে ডাক্তার দেখানোর প্রশ্নাবলি ও প্রস্তুতি নিন।",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 17.sp
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -406,6 +441,7 @@ fun HomeScreen(
             uiState = uiState,
             onDismiss = { viewModel.onEvent(HomeUiEvent.OnToggleChat) },
             onSendMessage = { msg -> viewModel.onEvent(HomeUiEvent.OnSendChatMessage(msg)) },
+            onScanUri = { uri -> viewModel.onEvent(HomeUiEvent.OnScanDocumentImage(uri.toString())) },
             onScanBitmap = { bmp -> viewModel.onEvent(HomeUiEvent.OnScanDocumentBitmap(bmp)) },
             onClearChat = { viewModel.onEvent(HomeUiEvent.OnClearChat) }
         )
@@ -417,8 +453,8 @@ private fun PatientProfileHeaderCard(uiState: HomeUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.2f))
+        colors = CardDefaults.cardColors(containerColor = CardBgTeal),
+        border = BorderStroke(1.dp, BorderTealSoft)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -529,6 +565,127 @@ private fun PatientProfileHeaderCard(uiState: HomeUiState) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionShortcuts(
+    onNavigateToPrescription: () -> Unit,
+    onNavigateToReportCapture: () -> Unit,
+    onNavigateToMedicineHistory: () -> Unit,
+    onNavigateToTimeline: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "জরুরি সেবা ও ফিচার",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            QuickServiceCard(
+                modifier = Modifier.weight(1f),
+                title = "প্রেসক্রিপশন",
+                subtitle = "সহজ পাঠ",
+                icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                iconTint = OceanBlue,
+                bgColor = CardBgOcean,
+                borderColor = BorderOceanSoft,
+                onClick = onNavigateToPrescription
+            )
+            QuickServiceCard(
+                modifier = Modifier.weight(1f),
+                title = "টেস্ট রিপোর্ট",
+                subtitle = "স্ক্যান ও মান",
+                icon = Icons.Default.Science,
+                iconTint = EmeraldGreen,
+                bgColor = CardBgMint,
+                borderColor = BorderMintSoft,
+                onClick = onNavigateToReportCapture
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            QuickServiceCard(
+                modifier = Modifier.weight(1f),
+                title = "ওষুধের রুটিন",
+                subtitle = "রিমাইন্ডার",
+                icon = Icons.Default.Medication,
+                iconTint = WarmAmber,
+                bgColor = CardBgAmber,
+                borderColor = BorderAmberSoft,
+                onClick = onNavigateToMedicineHistory
+            )
+            QuickServiceCard(
+                modifier = Modifier.weight(1f),
+                title = "টাইমলাইন",
+                subtitle = "ইতিহাস",
+                icon = Icons.Default.HistoryEdu,
+                iconTint = AiPurple,
+                bgColor = CardBgPurple,
+                borderColor = Color(0xFFD1C4E9),
+                onClick = onNavigateToTimeline
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickServiceCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    bgColor: Color,
+    borderColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(iconTint.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -733,24 +890,101 @@ fun AiChatFloatingBubble(
     }
 }
 
+private data class ChatSmartSuggestion(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val badge: String? = null,
+    val isCameraAction: Boolean = false,
+    val promptMessage: String = ""
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiChatBottomSheet(
     uiState: HomeUiState,
     onDismiss: () -> Unit,
     onSendMessage: (String) -> Unit,
-    onScanBitmap: (Bitmap) -> Unit,
+    onScanUri: (Uri) -> Unit,
+    onScanBitmap: (Bitmap) -> Unit = {},
     onClearChat: () -> Unit
 ) {
+    val context = LocalContext.current
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Camera launcher for document scan inside chat
-    val cameraLauncher = rememberLauncherForActivityResult(
+    // Camera launcher for full-resolution document scan inside chat
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            tempCameraUri?.let { uri ->
+                onScanUri(uri)
+            }
+        }
+    }
+
+    // Fallback preview launcher if file provider is unavailable
+    val takePreviewLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
             onScanBitmap(bitmap)
+        }
+    }
+
+    val launchCamera = {
+        try {
+            val file = File.createTempFile("chat_scan_", ".jpg", context.cacheDir)
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            tempCameraUri = uri
+            takePictureLauncher.launch(uri)
+        } catch (e: Exception) {
+            Timber.e(e, "FileProvider camera launch failed, attempting preview fallback")
+            try {
+                takePreviewLauncher.launch(null)
+            } catch (ex: Exception) {
+                Timber.e(ex, "Preview launcher also failed")
+                Toast.makeText(context, "ক্যামেরা চালু করতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Camera runtime permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(context, "ডকুমেন্ট বা ওষুধ স্ক্যান করতে ক্যামেরার অনুমতি প্রয়োজন", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val onCameraClick = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            launchCamera()
+        } else {
+            try {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            } catch (e: Exception) {
+                Timber.e(e, "Camera permission request failed")
+                Toast.makeText(context, "ক্যামেরার অনুমতি চাইতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Gallery launcher for document/prescription image selection
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            onScanUri(uri)
         }
     }
 
@@ -830,32 +1064,121 @@ fun AiChatBottomSheet(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // Quick Test Suggestions Row
-            Text(
-                text = "দ্রুত জিজ্ঞাসা:",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            // Smart Healthcare Suggestions Row with Icons & Action Triggers
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = PrimaryTeal,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "স্মার্ট স্বাস্থ্য সহায়িকা:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Text(
+                    text = "ট্যাপ করে সরাসরি স্ক্যান বা প্রশ্ন করুন",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            val smartSuggestions = listOf(
+                ChatSmartSuggestion(
+                    title = "ছবি দিয়ে ল্যাব রিপোর্ট বুঝুন",
+                    icon = Icons.Default.Science,
+                    badge = "ক্যামেরা স্ক্যান",
+                    isCameraAction = true
+                ),
+                ChatSmartSuggestion(
+                    title = "ওষুধের ব্যবহার ও তথ্য বুঝুন",
+                    icon = Icons.Default.Medication,
+                    promptMessage = "আমার ওষুধের খাওয়ার সঠিক নিয়ম, ডোজ এবং সাধারণ সতর্কতা সম্পর্কে বিস্তারিত বুঝিয়ে বলুন।"
+                ),
+                ChatSmartSuggestion(
+                    title = "ছবি দিয়ে প্রেসক্রিপশন বুঝুন",
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                    badge = "ক্যামেরা স্ক্যান",
+                    isCameraAction = true
+                ),
+                ChatSmartSuggestion(
+                    title = "AI থেকে স্বাস্থ্য পরামর্শ নিন",
+                    icon = Icons.Default.AutoAwesome,
+                    promptMessage = "আমার বর্তমান স্বাস্থ্য পরিস্থিতি অনুযায়ী সুস্থ থাকতে প্রয়োজনীয় জীবনযাত্রা ও সাধারণ স্বাস্থ্য পরামর্শ দিন।"
+                )
             )
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                val suggestions = listOf(
-                    "AI কি ঠিকমতো কাজ করছে?",
-                    "প্যারাসিটামলের নিয়ম কী?",
-                    "সুগার নিয়ন্ত্রণে করণীয় কী?",
-                    "ডাক্তার ভিজিটের প্রস্তুতি"
-                )
-                items(suggestions) { text ->
-                    SuggestionChip(
-                        onClick = { onSendMessage(text) },
-                        label = { Text(text, fontSize = 11.sp) },
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
-                    )
+                items(smartSuggestions) { item ->
+                    Card(
+                        onClick = {
+                            if (item.isCameraAction) {
+                                onCameraClick()
+                            } else if (item.promptMessage.isNotBlank()) {
+                                onSendMessage(item.promptMessage)
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.25f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .background(PrimaryTeal.copy(alpha = 0.12f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null,
+                                    tint = PrimaryTeal,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                            Text(
+                                text = item.title,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            if (item.badge != null) {
+                                Surface(
+                                    color = PrimaryTeal.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = item.badge,
+                                        fontSize = 9.sp,
+                                        color = PrimaryTeal,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -878,27 +1201,53 @@ fun AiChatBottomSheet(
                 }
             }
 
-            // Input Row with Text Field & Camera Document Scan Button
+            // Input Row with Text Field, Camera & Gallery Document Scan Buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { cameraLauncher.launch(null) },
+                    onClick = onCameraClick,
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(42.dp)
                         .background(PrimaryTeal.copy(alpha = 0.1f), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoCamera,
-                        contentDescription = "ডকুমেন্ট বা ওষুধ স্ক্যান করুন",
-                        tint = PrimaryTeal
+                        contentDescription = "ক্যামেরা দিয়ে স্ক্যান করুন",
+                        tint = PrimaryTeal,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+
+                IconButton(
+                    onClick = {
+                        try {
+                            galleryLauncher.launch("image/*")
+                        } catch (e: Exception) {
+                            Timber.e(e, "Gallery launch failed")
+                            Toast.makeText(context, "গ্যালারি খুলতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(PrimaryTeal.copy(alpha = 0.1f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "গ্যালারি থেকে ছবি আপলোড করুন",
+                        tint = PrimaryTeal,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
 
                 OutlinedTextField(
                     value = inputText,

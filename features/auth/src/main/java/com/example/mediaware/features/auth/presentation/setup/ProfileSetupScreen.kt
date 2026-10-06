@@ -297,7 +297,7 @@ private fun StepOneNameAndAge(
 ) {
     Column {
         Text(
-            text = "👤 আপনার প্রাথমিক পরিচিতি",
+            text = "আপনার প্রাথমিক পরিচিতি",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -425,7 +425,7 @@ private fun StepTwoGenderAndBlood(
 ) {
     Column {
         Text(
-            text = "🩸 লিঙ্গ ও রক্তের গ্রুপ",
+            text = "লিঙ্গ ও রক্তের গ্রুপ",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -573,7 +573,7 @@ private fun StepThreeDiseaseHistory(
 ) {
     Column {
         Text(
-            text = "🏥 পূর্ববর্তী স্বাস্থ্য ও রোগের ইতিহাস",
+            text = "পূর্ববর্তী স্বাস্থ্য ও রোগের ইতিহাস",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -617,7 +617,7 @@ private fun StepThreeDiseaseHistory(
                     onClick = { viewModel.onEvent(ProfileSetupUiEvent.OnToggleChronicCondition(condition)) },
                     label = {
                         Text(
-                            text = if (isSelected) "✓ $condition" else condition,
+                            text = condition,
                             fontSize = 13.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )

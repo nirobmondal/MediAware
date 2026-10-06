@@ -149,7 +149,7 @@ fun QuickRefCardScreen(
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
-                                text = "📈 পূর্ববর্তী ট্রেন্ড পর্যবেক্ষণ:",
+                                text = "পূর্ববর্তী ট্রেন্ড পর্যবেক্ষণ:",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF006A6A)
@@ -175,7 +175,7 @@ fun QuickRefCardScreen(
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
-                                text = "💊 বর্তমান নিয়মিত ওষুধ:",
+                                text = "বর্তমান নিয়মিত ওষুধ:",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF006A6A)
@@ -278,7 +278,7 @@ fun PatientProfileCard(summary: PatientPresentationSummary) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "👤 ${summary.patientNameBn}",
+                    text = summary.patientNameBn,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF191C1C)
@@ -328,7 +328,7 @@ fun RecentLabsCard(summary: PatientPresentationSummary) {
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = "🧪 সাম্প্রতিক টেস্ট রিপোর্ট সারসংক্ষেপ:",
+                text = "সাম্প্রতিক টেস্ট রিপোর্ট সারসংক্ষেপ:",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF006A6A)

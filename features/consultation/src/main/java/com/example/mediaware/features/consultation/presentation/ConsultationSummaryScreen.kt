@@ -536,7 +536,7 @@ fun ConsultationSummaryCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (isCalendarScheduled) "✅ ক্যালেন্ডারে যুক্ত হয়েছে" else "পরবর্তী ভিজিট ক্যালেন্ডারে যুক্ত করুন",
+                                    text = if (isCalendarScheduled) "ক্যালেন্ডারে যুক্ত হয়েছে" else "পরবর্তী ভিজিট ক্যালেন্ডারে যুক্ত করুন",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )

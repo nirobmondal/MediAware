@@ -140,7 +140,7 @@ class ConsultationSummaryViewModel @Inject constructor(
             )
             _sideEffect.send(
                 ConsultationSummarySideEffect.ShowToast(
-                    "✅ ${currentSummary.followUpDays.toString().toBengaliDigits()} দিন পরের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
+                    "${currentSummary.followUpDays.toString().toBengaliDigits()} দিন পরের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
                 )
             )
         }

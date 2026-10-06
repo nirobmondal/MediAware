@@ -74,6 +74,7 @@ fun QuestionChecklistScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(16.dp)
                 ) {
                     Button(
@@ -191,7 +192,7 @@ fun QuestionChecklistScreen(
                     Icon(Icons.Default.Add, contentDescription = null, tint = PrimaryTeal)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "➕ নতুন প্রশ্ন যোগ করুন",
+                        text = "নতুন প্রশ্ন যোগ করুন",
                         color = PrimaryTeal,
                         fontWeight = FontWeight.Medium
                     )

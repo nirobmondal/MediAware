@@ -299,7 +299,7 @@ fun AlarmAlertScreen(
                     )
                     Spacer(modifier = Modifier.size(12.dp))
                     Text(
-                        text = "✅  খেয়েছি",
+                        text = "খেয়েছি",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -330,7 +330,7 @@ fun AlarmAlertScreen(
                     )
                     Spacer(modifier = Modifier.size(12.dp))
                     Text(
-                        text = "⏰  ১০ মিনিট পর",
+                        text = "১০ মিনিট পর",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )

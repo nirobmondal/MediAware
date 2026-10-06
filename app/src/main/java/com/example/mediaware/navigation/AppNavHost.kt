@@ -74,6 +74,17 @@ fun AppNavHost(
                 },
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToSymptomSelect = {
+                    navController.navigate(SymptomRoutes.SELECT) {
+                        popUpTo("home") { inclusive = false }
+                    }
                 }
             )
         }

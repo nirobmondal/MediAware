@@ -20,6 +20,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
+import com.example.mediaware.core.designsystem.theme.OceanBlue
+import com.example.mediaware.core.designsystem.theme.EmeraldGreen
+import com.example.mediaware.core.designsystem.theme.AiPurple
+import com.example.mediaware.core.designsystem.theme.CardBgTeal
+import com.example.mediaware.core.designsystem.theme.CardBgOcean
+import com.example.mediaware.core.designsystem.theme.CardBgMint
+import com.example.mediaware.core.designsystem.theme.CardBgPurple
+import com.example.mediaware.core.designsystem.theme.BorderTealSoft
+import com.example.mediaware.core.designsystem.theme.BorderOceanSoft
+import com.example.mediaware.core.designsystem.theme.BorderMintSoft
 import com.example.mediaware.features.chamber.presentation.ChamberUiEvent
 import com.example.mediaware.features.chamber.presentation.ChamberUiState
 
@@ -142,8 +152,11 @@ fun ChamberHubScreen(
                 ChamberActionCard(
                     icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "ডাক্তার প্রেজেন্টেশন কার্ড",
-                    subtitle = "ডাক্তারকে আপনার সাম্প্রতিক সুগার, রক্তচাপ ও লক্ষণসমূহ একনজরে দেখান।",
-                    badgeText = "ওয়েক-লক ও টাচ-লক",
+                    subtitle = "সুগার, রক্তচাপ ও লক্ষণ একনজরে দেখান।",
+                    badgeText = "ওয়েক-লক",
+                    accentColor = OceanBlue,
+                    containerColor = CardBgOcean,
+                    borderColor = BorderOceanSoft,
                     onClick = onNavigateToQuickRef
                 )
             }
@@ -153,8 +166,11 @@ fun ChamberHubScreen(
                 ChamberActionCard(
                     icon = Icons.AutoMirrored.Filled.FactCheck,
                     title = "ডাক্তারের জন্য প্রশ্ন তালিকা",
-                    subtitle = "জরুরি প্রশ্নগুলোর উত্তর জেনে নিয়ে চেকলিস্টে টিকচিহ্ন দিন।",
+                    subtitle = "জরুরি প্রশ্ন জেনে চেকলিস্টে টিকচিহ্ন দিন।",
                     badgeText = uiState.progressFormattedBn,
+                    accentColor = EmeraldGreen,
+                    containerColor = CardBgMint,
+                    borderColor = BorderMintSoft,
                     onClick = onNavigateToChecklist
                 )
             }
@@ -164,8 +180,11 @@ fun ChamberHubScreen(
                 ChamberActionCard(
                     icon = Icons.Default.Mic,
                     title = "পরামর্শ অডিও রেকর্ডার",
-                    subtitle = "ডাক্তারের অনুমতি নিয়ে পরামর্শ রেকর্ড করুন। জেমিনি এআই স্বয়ংক্রিয়ভাবে সারসংক্ষেপ তৈরি করবে।",
+                    subtitle = "পরামর্শ রেকর্ড করুন ও সহজ এআই সারসংক্ষেপ পান।",
                     badgeText = "এআই সারাংশ",
+                    accentColor = PrimaryTeal,
+                    containerColor = CardBgTeal,
+                    borderColor = BorderTealSoft,
                     onClick = onNavigateToRecorder
                 )
             }
@@ -175,8 +194,11 @@ fun ChamberHubScreen(
                 ChamberActionCard(
                     icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "ভিজিট সারাংশ ও কর্মপরিকল্পনা",
-                    subtitle = "পরামর্শের মূল নির্দেশনা, করণীয় তালিকা ও পরবর্তী ফলো-আপ রিমাইন্ডার।",
-                    badgeText = "সারাংশ ও ক্যালেন্ডার",
+                    subtitle = "নির্দেশনা, করণীয় তালিকা ও ফলো-আপ রিমাইন্ডার।",
+                    badgeText = "সারাংশ",
+                    accentColor = AiPurple,
+                    containerColor = CardBgPurple,
+                    borderColor = Color(0xFFD1C4E9),
                     onClick = onNavigateToSummary
                 )
             }
@@ -217,6 +239,9 @@ fun ChamberActionCard(
     title: String,
     subtitle: String,
     badgeText: String,
+    accentColor: Color = PrimaryTeal,
+    containerColor: Color = CardBgTeal,
+    borderColor: Color = BorderTealSoft,
     onClick: () -> Unit
 ) {
     Card(
@@ -224,8 +249,8 @@ fun ChamberActionCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.dp, borderColor)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -234,13 +259,13 @@ fun ChamberActionCard(
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .background(PrimaryTeal.copy(alpha = 0.12f), CircleShape),
+                    .background(accentColor.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = PrimaryTeal,
+                    tint = accentColor,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -260,14 +285,14 @@ fun ChamberActionCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Surface(
-                        color = PrimaryTeal.copy(alpha = 0.10f),
+                        color = accentColor.copy(alpha = 0.12f),
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             text = badgeText,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = PrimaryTeal,
+                            color = accentColor,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -286,7 +311,7 @@ fun ChamberActionCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                tint = accentColor.copy(alpha = 0.6f),
                 modifier = Modifier.size(18.dp)
             )
         }
