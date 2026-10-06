@@ -75,9 +75,10 @@ class HomeViewModel @Inject constructor(
             Triple(user, nextReminder, isOnline)
         },
         consultationDao.getAllConsultationsFlow(),
+        healthRecordDao.getRecordsByTypeFlow("SYMPTOM_PREP"),
         healthRecordDao.getRecentRecordsFlow(5),
         _chatState
-    ) { (user, nextReminder, isOnline), consultations, healthRecords, chat ->
+    ) { (user, nextReminder, isOnline), consultations, prepGuides, healthRecords, chat ->
         HomeUiState(
             userName = user?.fullName ?: "সম্মানিত ব্যবহারকারী",
             userAge = user?.age,
@@ -94,6 +95,8 @@ class HomeViewModel @Inject constructor(
                 )
             },
             recentConsultation = consultations.firstOrNull(),
+            recentConsultations = consultations,
+            recentPreparationGuides = prepGuides,
             recentHealthRecords = healthRecords,
             isLoading = false,
             isChatOpen = chat.isChatOpen,

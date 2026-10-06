@@ -53,6 +53,9 @@ fun AppNavHost(
                 onNavigateToChamberHub = {
                     navController.navigate(ChamberRoutes.HUB)
                 },
+                onNavigateToChamberRecorder = {
+                    navController.navigate(ChamberRoutes.RECORDER)
+                },
                 onNavigateToConsultationSummary = {
                     navController.navigate(ConsultationRoutes.SUMMARY)
                 },

@@ -1,6 +1,13 @@
 package com.example.mediaware.features.symptom.presentation.select
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.speech.RecognizerIntent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mediaware.core.designsystem.theme.PrimaryTeal
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
@@ -41,6 +49,67 @@ fun SymptomSelectScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onEvent(SymptomSelectUiEvent.OnStopListeningVoice)
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                viewModel.onEvent(SymptomSelectUiEvent.OnVoiceTranscriptReceived(spokenText))
+            }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.onEvent(SymptomSelectUiEvent.OnStartListeningVoice)
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "আপনার শারীরিক সমস্যাটি বলুন (যেমন: মাথা ব্যথা, তীব্র জ্বর)...")
+            }
+            try {
+                speechRecognizerLauncher.launch(intent)
+            } catch (e: Exception) {
+                viewModel.onEvent(SymptomSelectUiEvent.OnStopListeningVoice)
+                Toast.makeText(context, "ডিভাইসে বাংলা ভয়েস রিকগনিশন সাপোর্ট করছে না", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "ভয়েস ইনপুট নিতে মাইক্রোফোনের অনুমতি প্রয়োজন", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val launchVoiceSearch: () -> Unit = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            viewModel.onEvent(SymptomSelectUiEvent.OnStartListeningVoice)
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "আপনার শারীরিক সমস্যাটি বলুন (যেমন: মাথা ব্যথা, তীব্র জ্বর)...")
+            }
+            try {
+                speechRecognizerLauncher.launch(intent)
+            } catch (e: Exception) {
+                viewModel.onEvent(SymptomSelectUiEvent.OnStopListeningVoice)
+                Toast.makeText(context, "ডিভাইসে বাংলা ভয়েস রিকগনিশন সাপোর্ট করছে না", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -134,6 +203,10 @@ fun SymptomSelectScreen(
                         IconButton(onClick = { viewModel.onEvent(SymptomSelectUiEvent.OnSearchQueryChanged("")) }) {
                             Icon(Icons.Default.Clear, contentDescription = "মুছুন")
                         }
+                    } else {
+                        IconButton(onClick = launchVoiceSearch) {
+                            Icon(Icons.Default.Mic, contentDescription = "ভয়েস ইনপুট", tint = PrimaryTeal)
+                        }
                     }
                 },
                 shape = RoundedCornerShape(14.dp),
@@ -145,11 +218,12 @@ fun SymptomSelectScreen(
 
             // Voice Recognition Helper Pill Bar
             Card(
-                onClick = { viewModel.onEvent(SymptomSelectUiEvent.OnToggleVoiceInput) },
+                onClick = launchVoiceSearch,
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (uiState.isListeningVoice) Color(0xFFFFEBEE) else Color(0xFFE0F2F1)
                 ),
+                border = BorderStroke(1.dp, if (uiState.isListeningVoice) Color(0xFFBA1A1A).copy(alpha = 0.5f) else PrimaryTeal.copy(alpha = 0.3f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -166,7 +240,7 @@ fun SymptomSelectScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (uiState.isListeningVoice) "শুনছি... বলুন কি সমস্যা হচ্ছে (ট্যাপ করে বন্ধ করুন)" else "মুখে বলে লক্ষণ যোগ করুন (ট্যাপ করুন)",
+                        text = if (uiState.isListeningVoice) "শুনছি... বলুন কী সমস্যা হচ্ছে (যেমন: মাথা ব্যথা, জ্বর)" else "মুখে বলে লক্ষণ খুঁজুন ও যোগ করুন (ট্যাপ করুন)",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = if (uiState.isListeningVoice) Color(0xFFBA1A1A) else PrimaryTeal,
                             fontWeight = FontWeight.Medium

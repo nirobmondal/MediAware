@@ -80,62 +80,7 @@ fun ChamberHubScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.height(4.dp))
-                // Silent Mode Prompt Card (Chamber Constraint: 0dB Noise)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (uiState.isRingerMuted) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
-                    ),
-                    border = BorderStroke(
-                        1.dp,
-                        if (uiState.isRingerMuted) Color(0xFF81C784) else Color(0xFFFFB74D)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = if (uiState.isRingerMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.Default.NotificationsActive,
-                                contentDescription = null,
-                                tint = if (uiState.isRingerMuted) Color(0xFF2E7D32) else Color(0xFFE65100),
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = if (uiState.isRingerMuted) "সাইলেন্ট মোড সক্রিয় আছে" else "চেম্বারে প্রবেশের আগে ফোন সাইলেন্ট করুন",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (uiState.isRingerMuted) Color(0xFF2E7D32) else Color(0xFFE65100)
-                                )
-                                Text(
-                                    text = if (uiState.isRingerMuted) "ভিজিটের সময় কোনো রিং বা বিপ শব্দ হবে না।" else "জরুরি পরামর্শে কোনো অপ্রত্যাশিত শব্দ যাতে বিঘ্ন না ঘটায়।",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Switch(
-                            checked = uiState.isRingerMuted,
-                            onCheckedChange = { onEvent(ChamberUiEvent.OnToggleRingerMute) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF2E7D32)
-                            )
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(2.dp))
             }
 
             item {

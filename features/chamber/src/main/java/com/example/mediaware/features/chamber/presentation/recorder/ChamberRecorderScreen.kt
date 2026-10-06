@@ -137,89 +137,6 @@ fun ChamberRecorderScreen(
                     }
                 }
 
-                // Doctor Consultation Guidelines Card (shown when not recording)
-                if (!uiState.isRecording) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = PrimaryTeal.copy(alpha = 0.06f)),
-                        border = BorderStroke(1.dp, PrimaryTeal.copy(alpha = 0.25f))
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = PrimaryTeal,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "ডাক্তার পরামর্শ অডিও রেকর্ড নির্দেশিকা",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryTeal
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("১. চিকিৎসকের অনুমতি: রেকর্ডিং শুরুর পূর্বে ডাক্তার সাহেবের মৌখিক সম্মতি নিন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text("২. অবস্থান: ফোনটি টেবিলের ওপর রাখুন যাতে উভয় কণ্ঠ স্পষ্ট শোনা যায়।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text("৩. পরিচ্ছন্ন শব্দ: অতিরিক্ত শোরগোল এড়িয়ে শান্ত পরিবেশ বজায় রাখুন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text("৪. এআই সারসংক্ষেপ: সমাপ্তিতে জেমিনি এআই করণীয় তালিকা ও ফলো-আপ তৈরি করবে।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-
-                // Doctor Consent Switch Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (uiState.hasDoctorConsent) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
-                    ),
-                    border = BorderStroke(
-                        1.dp,
-                        if (uiState.hasDoctorConsent) Color(0xFF81C784) else Color(0xFFFFD54F)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "ডাক্তার সাহেবের অনুমতি",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (uiState.hasDoctorConsent) Color(0xFF2E7D32) else Color(0xFF8D6E63)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "রেকর্ডিং শুরুর পূর্বে চিকিৎসকের মৌখিক সম্মতি নিশ্চিত করুন।",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Switch(
-                            checked = uiState.hasDoctorConsent,
-                            onCheckedChange = { onEvent(ChamberUiEvent.OnToggleDoctorConsent(it)) },
-                            enabled = !uiState.isRecording,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF2E7D32)
-                            )
-                        )
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -303,8 +220,8 @@ fun ChamberRecorderScreen(
                     modifier = Modifier
                         .size(76.dp)
                         .clip(CircleShape)
-                        .background(if (uiState.isRecording) Color(0xFFBA1A1A) else if (uiState.hasDoctorConsent) PrimaryTeal else Color(0xFFB0BEC5))
-                        .clickable(enabled = uiState.hasDoctorConsent || uiState.isRecording) {
+                        .background(if (uiState.isRecording) Color(0xFFBA1A1A) else PrimaryTeal)
+                        .clickable {
                             if (uiState.isRecording) {
                                 onEvent(ChamberUiEvent.OnStopRecording)
                             } else {
@@ -332,7 +249,7 @@ fun ChamberRecorderScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = if (uiState.isRecording) "রেকর্ডিং সমাপ্ত ও এআই সারাংশ তৈরি করুন" else if (uiState.hasDoctorConsent) "রেকর্ডিং শুরু করতে চাপ দিন" else "অনুমতি নিশ্চিত করে রেকর্ড শুরু করুন",
+                    text = if (uiState.isRecording) "রেকর্ডিং সমাপ্ত ও এআই সারাংশ তৈরি করুন" else "ডাক্তার পরামর্শ রেকর্ড শুরু করতে ট্যাপ করুন",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

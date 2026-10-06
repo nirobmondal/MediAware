@@ -24,6 +24,8 @@ data class HomeUiState(
     val isOnline: Boolean = true,
     val upcomingReminder: UpcomingReminderUiModel? = null,
     val recentConsultation: ConsultationEntity? = null,
+    val recentConsultations: List<ConsultationEntity> = emptyList(),
+    val recentPreparationGuides: List<HealthRecordEntity> = emptyList(),
     val recentHealthRecords: List<HealthRecordEntity> = emptyList(),
     val isLoading: Boolean = true,
     val isChatOpen: Boolean = false,

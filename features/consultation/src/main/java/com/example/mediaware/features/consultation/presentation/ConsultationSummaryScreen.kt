@@ -84,32 +84,8 @@ fun ConsultationSummaryScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "ফিরে যান")
                     }
                 },
-                actions = {
-                    IconButton(onClick = onNavigateToRecordAudio) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = "নতুন অডিও রেকর্ড",
-                            tint = PrimaryTeal
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
-        },
-        floatingActionButton = {
-            if (uiState.consultations.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToRecordAudio,
-                    containerColor = PrimaryTeal,
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(28.dp),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
-                ) {
-                    Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("নতুন পরামর্শ রেকর্ড", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-            }
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -141,7 +117,7 @@ fun ConsultationSummaryScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.MicNone,
+                            imageVector = Icons.Default.MedicalInformation,
                             contentDescription = null,
                             modifier = Modifier.size(36.dp),
                             tint = PrimaryTeal
@@ -149,29 +125,32 @@ fun ConsultationSummaryScreen(
                     }
                     Spacer(modifier = Modifier.height(18.dp))
                     Text(
-                        text = "এখনো কোনো পরামর্শ রেকর্ড করা হয়নি",
+                        text = "এখনো কোনো পরামর্শ সংরক্ষিত নেই",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "ডাক্তারের সাথে সাক্ষাতের সময় আলোচনা রেকর্ড করুন। আমাদের জেমিনি এআই স্বয়ংক্রিয়ভাবে তারিখভিত্তিক সারাংশ, প্রেসক্রিপশন ও করণীয় কর্মপরিকল্পনা তৈরি করে দেবে।",
+                        text = "চেম্বারে ডাক্তারের সাথে আলোচনা রেকর্ড করলে আমাদের এআই স্বয়ংক্রিয়ভাবে তারিখভিত্তিক পরামর্শের সারসংক্ষেপ, ওষুধ নির্দেশিকা ও কর্মপরিকল্পনা প্রস্তুত করবে।",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         lineHeight = 18.sp
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = onNavigateToRecordAudio,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal),
-                        modifier = Modifier.height(48.dp)
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Surface(
+                        color = PrimaryTeal.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("পরামর্শ অডিও রেকর্ড শুরু করুন", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "হোম পেজ থেকে 'ডাক্তার পরামর্শ অডিও রেকর্ড' অপশনে ট্যাপ করে রেকর্ডিং শুরু করতে পারেন।",
+                            fontSize = 12.sp,
+                            color = PrimaryTeal,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        )
                     }
                 }
             }
@@ -239,12 +218,17 @@ fun ConsultationSummaryScreen(
                 items(uiState.consultations, key = { it.id }) { summary ->
                     val isExpanded = uiState.expandedConsultationId == summary.id
                     val isCalendarScheduled = uiState.scheduledCalendarIds.contains(summary.id)
+                    val selectedDays = uiState.customFollowUpDaysMap[summary.id] ?: summary.followUpDays
 
                     ConsultationSummaryCard(
                         summary = summary,
                         isExpanded = isExpanded,
                         isCalendarScheduled = isCalendarScheduled,
                         selectedCategory = uiState.selectedCategory,
+                        selectedFollowUpDays = selectedDays,
+                        onUpdateFollowUpDays = { days ->
+                            viewModel.onEvent(ConsultationSummaryUiEvent.OnUpdateFollowUpDays(summary.id, days))
+                        },
                         onToggleExpand = { viewModel.onEvent(ConsultationSummaryUiEvent.OnToggleExpand(summary.id)) },
                         onToggleActionItem = { itemId -> viewModel.onEvent(ConsultationSummaryUiEvent.OnToggleActionItem(summary.id, itemId)) },
                         onSelectCategory = { cat -> viewModel.onEvent(ConsultationSummaryUiEvent.OnSelectCategory(cat)) },
@@ -254,7 +238,7 @@ fun ConsultationSummaryScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(72.dp)) // Extra space for FAB
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
         }
@@ -267,6 +251,8 @@ fun ConsultationSummaryCard(
     isExpanded: Boolean,
     isCalendarScheduled: Boolean,
     selectedCategory: ActionItemCategory?,
+    selectedFollowUpDays: Int,
+    onUpdateFollowUpDays: (Int) -> Unit,
     onToggleExpand: () -> Unit,
     onToggleActionItem: (String) -> Unit,
     onSelectCategory: (ActionItemCategory?) -> Unit,
@@ -504,15 +490,54 @@ fun ConsultationSummaryCard(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = "পরবর্তী ফলো-আপ ভিজিট: ${summary.followUpDateStringBn}",
+                                        text = "ডাক্তারের পরামর্শকৃত ফলো-আপ: ${summary.followUpDays.toString().toBengaliDigits()} দিন পর",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = summary.followUpReasonBn,
+                                        text = summary.followUpReasonBn.ifBlank { "নিয়মিত পর্যবেক্ষণ ও স্বাস্থ্য পর্যালোচনা" },
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text(
+                                text = "ক্যালেন্ডার রিমাইন্ডারের সময় নির্বাচন করুন:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val options = remember(summary.followUpDays) {
+                                val list = mutableListOf(3, 7, 10, 15, 30)
+                                if (summary.followUpDays > 0 && !list.contains(summary.followUpDays)) {
+                                    list.add(summary.followUpDays)
+                                    list.sort()
+                                }
+                                list
+                            }
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(options) { days ->
+                                    val isSelected = selectedFollowUpDays == days
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { onUpdateFollowUpDays(days) },
+                                        label = {
+                                            Text(
+                                                text = if (days == summary.followUpDays) "${days.toString().toBengaliDigits()} দিন (প্রস্তাবিত)" else "${days.toString().toBengaliDigits()} দিন",
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = PrimaryTeal,
+                                            selectedLabelColor = Color.White
+                                        )
                                     )
                                 }
                             }
@@ -536,7 +561,7 @@ fun ConsultationSummaryCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (isCalendarScheduled) "ক্যালেন্ডারে যুক্ত হয়েছে" else "পরবর্তী ভিজিট ক্যালেন্ডারে যুক্ত করুন",
+                                    text = if (isCalendarScheduled) "ক্যালেন্ডারে যুক্ত হয়েছে (${selectedFollowUpDays.toString().toBengaliDigits()} দিন পর)" else "ক্যালেন্ডারে ফলো-আপ যুক্ত করুন (${selectedFollowUpDays.toString().toBengaliDigits()} দিন পর)",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )

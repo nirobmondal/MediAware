@@ -36,14 +36,12 @@ import timber.log.Timber
 data class ChamberUiState(
     val patientSummary: PatientPresentationSummary = createDefaultPatientSummary(),
     val questions: List<DoctorQuestionItem> = createDefaultQuestions(),
-    val hasDoctorConsent: Boolean = false,
     val isRecording: Boolean = false,
     val recordingDurationSeconds: Long = 0L,
     val currentAmplitude: Int = 0,
     val recordedAudioFile: File? = null,
     val is14MinWarningActive: Boolean = false,
     val isTouchLocked: Boolean = false,
-    val isRingerMuted: Boolean = false,
     val isSummarizing: Boolean = false,
     val summarizingMessage: String = ""
 ) {
@@ -67,13 +65,11 @@ data class ChamberUiState(
 }
 
 sealed interface ChamberUiEvent {
-    data class OnToggleDoctorConsent(val hasConsent: Boolean) : ChamberUiEvent
     data object OnStartRecording : ChamberUiEvent
     data object OnStopRecording : ChamberUiEvent
     data class OnToggleQuestion(val id: String) : ChamberUiEvent
     data class OnAddCustomQuestion(val questionBn: String) : ChamberUiEvent
     data class OnToggleTouchLock(val isLocked: Boolean) : ChamberUiEvent
-    data object OnToggleRingerMute : ChamberUiEvent
     data object OnDismissWarning : ChamberUiEvent
 }
 
@@ -166,18 +162,7 @@ class ChamberViewModel @Inject constructor(
 
     fun onEvent(event: ChamberUiEvent) {
         when (event) {
-            is ChamberUiEvent.OnToggleDoctorConsent -> {
-                _uiState.update { it.copy(hasDoctorConsent = event.hasConsent) }
-            }
-
             is ChamberUiEvent.OnStartRecording -> {
-                if (!_uiState.value.hasDoctorConsent) {
-                    viewModelScope.launch {
-                        _sideEffects.send(ChamberUiSideEffect.ShowToast("রেকর্ডিং শুরুর পূর্বে চিকিৎসকের মৌখিক অনুমতি প্রয়োজন।"))
-                    }
-                    return
-                }
-
                 try {
                     val file = audioRecorder.startRecording(
                         onWarning14Min = {
@@ -231,15 +216,6 @@ class ChamberViewModel @Inject constructor(
 
             is ChamberUiEvent.OnToggleTouchLock -> {
                 _uiState.update { it.copy(isTouchLocked = event.isLocked) }
-            }
-
-            is ChamberUiEvent.OnToggleRingerMute -> {
-                val next = !_uiState.value.isRingerMuted
-                _uiState.update { it.copy(isRingerMuted = next) }
-                viewModelScope.launch {
-                    val msg = if (next) "সাইলেন্ট মোড সক্রিয় হয়েছে।" else "সাধারণ রিংগার মোড সক্রিয় হয়েছে।"
-                    _sideEffects.send(ChamberUiSideEffect.ShowToast(msg))
-                }
             }
 
             is ChamberUiEvent.OnDismissWarning -> {

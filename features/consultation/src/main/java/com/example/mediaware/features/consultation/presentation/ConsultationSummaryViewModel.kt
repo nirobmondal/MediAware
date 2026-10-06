@@ -25,6 +25,7 @@ data class ConsultationSummaryUiState(
     val expandedConsultationId: String? = null,
     val selectedCategory: ActionItemCategory? = null,
     val scheduledCalendarIds: Set<String> = emptySet(),
+    val customFollowUpDaysMap: Map<String, Int> = emptyMap(),
     val toastMessage: String? = null
 )
 
@@ -32,6 +33,7 @@ sealed interface ConsultationSummaryUiEvent {
     data class OnToggleExpand(val consultationId: String) : ConsultationSummaryUiEvent
     data class OnToggleActionItem(val consultationId: String, val itemId: String) : ConsultationSummaryUiEvent
     data class OnSelectCategory(val category: ActionItemCategory?) : ConsultationSummaryUiEvent
+    data class OnUpdateFollowUpDays(val consultationId: String, val days: Int) : ConsultationSummaryUiEvent
     data class OnScheduleCalendar(val consultationId: String) : ConsultationSummaryUiEvent
     data class OnDeleteConsultation(val consultationId: String) : ConsultationSummaryUiEvent
     data object OnDismissToast : ConsultationSummaryUiEvent
@@ -86,6 +88,11 @@ class ConsultationSummaryViewModel @Inject constructor(
             is ConsultationSummaryUiEvent.OnSelectCategory -> {
                 _uiState.update { it.copy(selectedCategory = event.category) }
             }
+            is ConsultationSummaryUiEvent.OnUpdateFollowUpDays -> {
+                _uiState.update { state ->
+                    state.copy(customFollowUpDaysMap = state.customFollowUpDaysMap + (event.consultationId to event.days))
+                }
+            }
             is ConsultationSummaryUiEvent.OnScheduleCalendar -> {
                 scheduleCalendar(event.consultationId)
             }
@@ -121,7 +128,8 @@ class ConsultationSummaryViewModel @Inject constructor(
 
     private fun scheduleCalendar(consultationId: String) {
         val currentSummary = _uiState.value.consultations.find { it.id == consultationId } ?: return
-        val followUpMillis = System.currentTimeMillis() + (currentSummary.followUpDays * 24L * 60L * 60L * 1000L)
+        val chosenDays = _uiState.value.customFollowUpDaysMap[consultationId] ?: currentSummary.followUpDays
+        val followUpMillis = System.currentTimeMillis() + (chosenDays.toLong() * 24L * 60L * 60L * 1000L)
         val title = "ডাক্তার ফলো-আপ ভিজিট: ${currentSummary.doctorName}"
         val description = "ফলো-আপ কারণ: ${currentSummary.followUpReasonBn}\n\nকরণীয়:\n" +
                 currentSummary.actionItems.joinToString("\n") { "• ${it.task}" }
@@ -140,7 +148,7 @@ class ConsultationSummaryViewModel @Inject constructor(
             )
             _sideEffect.send(
                 ConsultationSummarySideEffect.ShowToast(
-                    "${currentSummary.followUpDays.toString().toBengaliDigits()} দিন পরের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
+                    "${chosenDays.toString().toBengaliDigits()} দিন পরের ফলো-আপ রিমাইন্ডার ক্যালেন্ডারে সেট করা হয়েছে।"
                 )
             )
         }

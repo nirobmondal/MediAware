@@ -123,9 +123,12 @@ class VisitPrepViewModel @Inject constructor(
                     title = "ভিজিট প্রস্তুতি: ${resolvedSymptoms.joinToString { it.nameBn }}",
                     summaryBn = planResult.triageAssessmentBn,
                     detailsJson = JSONObject().apply {
+                        put("speakingPoints", JSONArray(updatedCard.doctorSpeakingPointsBn))
                         put("whatToShowDoctor", JSONArray(planResult.whatToShowDoctor))
-                        put("cheatQuestions", JSONArray(planResult.cheatQuestionsForDoctor))
+                        put("cheatQuestions", JSONArray(updatedQuestions))
                         put("homeCareAdvice", planResult.homeCareAdviceBn)
+                        put("suggestedSpecialist", planResult.suggestedSpecialistBn)
+                        put("symptoms", JSONArray(resolvedSymptoms.map { it.nameBn }))
                     }.toString(),
                     sourceGrounding = "DGHS & WHO Triage Protocol"
                 )
