@@ -1,8 +1,12 @@
 package com.example.mediaware.features.auth.presentation.profile
 
+import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,8 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.mediaware.core.designsystem.component.PRESET_AVATARS
+import com.example.mediaware.core.designsystem.component.UserAvatarView
 import com.example.mediaware.core.designsystem.theme.*
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -36,6 +44,35 @@ fun ProfileScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showAvatarSheet by remember { mutableStateOf(false) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            try {
+                val file = File(context.filesDir, "user_avatar.jpg")
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                }
+                viewModel.onEvent(ProfileUiEvent.OnUpdatePhotoUri(file.absolutePath))
+                showAvatarSheet = false
+                Toast.makeText(context, "প্রোফাইল ছবি সফলভাবে আপডেট করা হয়েছে", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(context, "ছবি সংরক্ষণ করতে ব্যর্থ হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onEvent(ProfileUiEvent.OnUpdatePhotoUri(uri.toString()))
+            showAvatarSheet = false
+            Toast.makeText(context, "প্রোফাইল ছবি সফলভাবে আপডেট করা হয়েছে", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(state.saveSuccessMessage) {
         state.saveSuccessMessage?.let {
@@ -109,17 +146,33 @@ fun ProfileScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(64.dp)
+                                    .size(68.dp)
                                     .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
+                                    .clickable { showAvatarSheet = true },
+                                contentAlignment = Alignment.BottomEnd
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(38.dp)
+                                UserAvatarView(
+                                    avatarId = state.selectedAvatarId,
+                                    photoUriString = state.customPhotoUri,
+                                    size = 68.dp
                                 )
+                                Box(
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White)
+                                        .padding(2.dp)
+                                        .clip(CircleShape)
+                                        .background(PrimaryTeal),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PhotoCamera,
+                                        contentDescription = "ছবি বা অ্যাভাটার পরিবর্তন",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.width(14.dp))
@@ -421,6 +474,138 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+
+    if (showAvatarSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAvatarSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "প্রোফাইল ছবি বা অ্যাভাটার পরিবর্তন",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "ক্যামেরা, গ্যালারি অথবা স্বাস্থ্য অ্যাভাটার বেছে নিন",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Camera & Gallery action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { cameraLauncher.launch(null) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.2.dp, PrimaryTeal)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = null,
+                            tint = PrimaryTeal,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("ছবি তুলুন", color = PrimaryTeal, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { galleryLauncher.launch("image/*") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.2.dp, OceanBlue)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = null,
+                            tint = OceanBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("গ্যালারি", color = OceanBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalDivider(color = Color(0xFFEEEEEE))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "স্বাস্থ্য প্রোফাইল অ্যাভাটার",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 2 rows x 3 columns preset avatars
+                PRESET_AVATARS.chunked(3).forEach { rowAvatars ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        rowAvatars.forEach { avatar ->
+                            val isSelected = state.selectedAvatarId == avatar.id && state.customPhotoUri == null
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        viewModel.onEvent(ProfileUiEvent.OnSelectAvatar(avatar.id))
+                                        showAvatarSheet = false
+                                        Toast.makeText(context, "${avatar.nameBn} অ্যাভাটার নির্বাচিত হয়েছে", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(54.dp)
+                                        .border(
+                                            width = if (isSelected) 3.dp else 0.dp,
+                                            color = if (isSelected) PrimaryTeal else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                        .padding(if (isSelected) 3.dp else 0.dp)
+                                ) {
+                                    UserAvatarView(avatarId = avatar.id, photoUriString = null, size = 48.dp)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = avatar.nameBn,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) PrimaryTeal else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

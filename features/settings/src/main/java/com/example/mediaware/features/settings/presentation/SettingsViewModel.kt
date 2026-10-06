@@ -5,6 +5,7 @@ import com.example.mediaware.core.common.base.BaseViewModel
 import com.example.mediaware.core.common.result.Resource
 import com.example.mediaware.core.domain.repository.UserRepository
 import com.example.mediaware.features.settings.domain.usecase.ClearSmartCacheUseCase
+import com.example.mediaware.core.common.settings.AppSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -12,7 +13,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val clearSmartCacheUseCase: ClearSmartCacheUseCase,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val appSettingsManager: AppSettingsManager
 ) : BaseViewModel<SettingsUiState, SettingsUiEvent, SettingsSideEffect>(SettingsUiState()) {
 
     init {
@@ -20,17 +22,43 @@ class SettingsViewModel @Inject constructor(
             val user = userRepository.getUserCredentials()
             setState { copy(isBiometricEnabled = user?.isBiometricEnabled ?: false) }
 
-            userRepository.getUserProfileFlow().collect { profile ->
-                if (profile != null) {
-                    setState {
-                        copy(
-                            userName = profile.fullName,
-                            userPhone = profile.phoneNumber,
-                            bloodGroup = profile.bloodGroup ?: "A+",
-                            userAge = profile.age,
-                            isBiometricEnabled = profile.isBiometricEnabled
-                        )
+            launch {
+                userRepository.getUserProfileFlow().collect { profile ->
+                    if (profile != null) {
+                        setState {
+                            copy(
+                                userName = profile.fullName,
+                                userPhone = profile.phoneNumber,
+                                bloodGroup = profile.bloodGroup ?: "A+",
+                                userAge = profile.age,
+                                isBiometricEnabled = profile.isBiometricEnabled
+                            )
+                        }
                     }
+                }
+            }
+
+            launch {
+                appSettingsManager.isLargeTextEnabled.collect { isLarge ->
+                    setState { copy(isLargeTextEnabled = isLarge) }
+                }
+            }
+
+            launch {
+                appSettingsManager.isAudioGuidanceEnabled.collect { isAudio ->
+                    setState { copy(isAudioGuidanceEnabled = isAudio) }
+                }
+            }
+
+            launch {
+                appSettingsManager.selectedAvatarId.collect { avatar ->
+                    setState { copy(selectedAvatarId = avatar) }
+                }
+            }
+
+            launch {
+                appSettingsManager.customPhotoUri.collect { photo ->
+                    setState { copy(customPhotoUri = photo) }
                 }
             }
         }
@@ -43,6 +71,15 @@ class SettingsViewModel @Inject constructor(
                     userRepository.setBiometricEnabled(event.enabled)
                     setState { copy(isBiometricEnabled = event.enabled) }
                 }
+            }
+            is SettingsUiEvent.OnToggleLargeText -> {
+                appSettingsManager.setLargeTextEnabled(event.enabled)
+            }
+            is SettingsUiEvent.OnToggleAudioGuidance -> {
+                appSettingsManager.setAudioGuidanceEnabled(event.enabled)
+            }
+            SettingsUiEvent.OnTestAudioGuidance -> {
+                appSettingsManager.playAudioFeedback("অডিও গাইডেন্স পরীক্ষা সফল হয়েছে। স্পিকার ও সাউন্ড সক্রিয় আছে।")
             }
             SettingsUiEvent.OnClearCacheClicked -> setState { copy(showClearCacheDialog = true) }
             SettingsUiEvent.OnDismissClearCacheDialog -> setState { copy(showClearCacheDialog = false) }

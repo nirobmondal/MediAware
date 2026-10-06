@@ -34,6 +34,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mediaware.core.designsystem.component.MediAwareBottomNavBar
 import com.example.mediaware.core.designsystem.component.MediAwareNavTab
+import com.example.mediaware.core.designsystem.component.UserAvatarView
 import com.example.mediaware.core.designsystem.theme.*
 import com.example.mediaware.core.designsystem.util.toBengaliDigits
 
@@ -48,10 +49,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    // Local toggles for display preferences
-    var isLargeTextEnabled by remember { mutableStateOf(false) }
-    var isSoundAlertsEnabled by remember { mutableStateOf(true) }
 
     LaunchedEffect(key1 = true) {
         viewModel.effect.collect { effect ->
@@ -164,24 +161,11 @@ fun SettingsScreen(
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(PrimaryTeal, EmeraldGreen)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                    UserAvatarView(
+                        avatarId = uiState.selectedAvatarId,
+                        photoUriString = uiState.customPhotoUri,
+                        size = 54.dp
+                    )
 
                     Spacer(modifier = Modifier.width(14.dp))
 
@@ -276,11 +260,26 @@ fun SettingsScreen(
                     title = "অডিও গাইডেন্স ও সাউন্ড",
                     subtitle = "ওষুধ ও প্রেসক্রিপশন পড়ার সময় অডিও সহায়তা",
                     trailing = {
-                        Switch(
-                            checked = isSoundAlertsEnabled,
-                            onCheckedChange = { isSoundAlertsEnabled = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = PrimaryTeal)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (uiState.isAudioGuidanceEnabled) {
+                                IconButton(
+                                    onClick = { viewModel.onEvent(SettingsUiEvent.OnTestAudioGuidance) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "শব্দ পরীক্ষা",
+                                        tint = PrimaryTeal,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = uiState.isAudioGuidanceEnabled,
+                                onCheckedChange = { viewModel.onEvent(SettingsUiEvent.OnToggleAudioGuidance(it)) },
+                                colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = PrimaryTeal)
+                            )
+                        }
                     }
                 )
 
@@ -294,8 +293,8 @@ fun SettingsScreen(
                     subtitle = "প্রেসক্রিপশন ও রিপোর্ট সহজে দেখার জন্য",
                     trailing = {
                         Switch(
-                            checked = isLargeTextEnabled,
-                            onCheckedChange = { isLargeTextEnabled = it },
+                            checked = uiState.isLargeTextEnabled,
+                            onCheckedChange = { viewModel.onEvent(SettingsUiEvent.OnToggleLargeText(it)) },
                             colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = PrimaryTeal)
                         )
                     }

@@ -13,12 +13,19 @@ data class SettingsUiState(
     val medicineCacheCount: Int = 6,
     val testCacheCount: Int = 4,
     val isBiometricEnabled: Boolean = false,
+    val isLargeTextEnabled: Boolean = false,
+    val isAudioGuidanceEnabled: Boolean = true,
+    val selectedAvatarId: String = "avatar_teal",
+    val customPhotoUri: String? = null,
     val showClearCacheDialog: Boolean = false,
     val isClearingCache: Boolean = false
 ) : ViewState
 
 sealed interface SettingsUiEvent : ViewEvent {
     data class OnToggleBiometric(val enabled: Boolean) : SettingsUiEvent
+    data class OnToggleLargeText(val enabled: Boolean) : SettingsUiEvent
+    data class OnToggleAudioGuidance(val enabled: Boolean) : SettingsUiEvent
+    data object OnTestAudioGuidance : SettingsUiEvent
     data object OnClearCacheClicked : SettingsUiEvent
     data object OnDismissClearCacheDialog : SettingsUiEvent
     data object OnConfirmClearCache : SettingsUiEvent

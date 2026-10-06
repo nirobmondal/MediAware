@@ -2,6 +2,7 @@ package com.example.mediaware.features.auth.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mediaware.core.common.settings.AppSettingsManager
 import com.example.mediaware.core.database.dao.UserProfileDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,9 @@ data class ProfileUiState(
     val selectedConditions: Set<String> = emptySet(),
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
-    val saveSuccessMessage: String? = null
+    val saveSuccessMessage: String? = null,
+    val selectedAvatarId: String = "avatar_teal",
+    val customPhotoUri: String? = null
 )
 
 sealed interface ProfileUiEvent {
@@ -30,6 +33,8 @@ sealed interface ProfileUiEvent {
     data class OnGenderChanged(val gender: String) : ProfileUiEvent
     data class OnBloodGroupChanged(val bloodGroup: String) : ProfileUiEvent
     data class OnToggleCondition(val condition: String) : ProfileUiEvent
+    data class OnSelectAvatar(val avatarId: String) : ProfileUiEvent
+    data class OnUpdatePhotoUri(val uriString: String) : ProfileUiEvent
     data object OnToggleEditMode : ProfileUiEvent
     data object OnSaveProfile : ProfileUiEvent
     data object OnClearMessage : ProfileUiEvent
@@ -37,7 +42,8 @@ sealed interface ProfileUiEvent {
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userProfileDao: UserProfileDao
+    private val userProfileDao: UserProfileDao,
+    private val appSettingsManager: AppSettingsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -45,6 +51,20 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadProfile()
+        observeAvatarSettings()
+    }
+
+    private fun observeAvatarSettings() {
+        viewModelScope.launch {
+            appSettingsManager.selectedAvatarId.collect { avatarId ->
+                _uiState.update { it.copy(selectedAvatarId = avatarId) }
+            }
+        }
+        viewModelScope.launch {
+            appSettingsManager.customPhotoUri.collect { photoUri ->
+                _uiState.update { it.copy(customPhotoUri = photoUri) }
+            }
+        }
     }
 
     private fun loadProfile() {
@@ -79,6 +99,15 @@ class ProfileViewModel @Inject constructor(
                     if (current.contains(event.condition)) current.remove(event.condition) else current.add(event.condition)
                     state.copy(selectedConditions = current)
                 }
+            }
+            is ProfileUiEvent.OnSelectAvatar -> {
+                appSettingsManager.setAvatarId(event.avatarId)
+                appSettingsManager.setCustomPhotoUri(null)
+                _uiState.update { it.copy(selectedAvatarId = event.avatarId, customPhotoUri = null) }
+            }
+            is ProfileUiEvent.OnUpdatePhotoUri -> {
+                appSettingsManager.setCustomPhotoUri(event.uriString)
+                _uiState.update { it.copy(customPhotoUri = event.uriString) }
             }
             ProfileUiEvent.OnToggleEditMode -> _uiState.update { it.copy(isEditing = !it.isEditing) }
             ProfileUiEvent.OnSaveProfile -> saveProfile()

@@ -20,8 +20,12 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.painterResource
+import com.example.mediaware.core.designsystem.component.UserAvatarView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -633,19 +637,11 @@ private fun PatientProfileHeaderCard(uiState: HomeUiState) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .background(PrimaryTeal.copy(alpha = 0.12f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = PrimaryTeal,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                    UserAvatarView(
+                        avatarId = uiState.selectedAvatarId,
+                        photoUriString = uiState.customPhotoUri,
+                        size = 40.dp
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
@@ -1434,10 +1430,10 @@ fun AiChatFloatingBubble(
                     .background(if (isOnline) Color(0xFF00E676).copy(alpha = alphaAnim) else Color(0xFFBA1A1A))
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
+            Image(
+                painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
                 contentDescription = "MediAware AI",
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -1456,14 +1452,6 @@ fun GeminiChatTopBar(
     onBack: () -> Unit,
     onClearChat: () -> Unit
 ) {
-    val geminiGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF4285F4),
-            Color(0xFF9B51E0),
-            Color(0xFF00ACC1)
-        )
-    )
-
     TopAppBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
@@ -1479,20 +1467,21 @@ fun GeminiChatTopBar(
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .background(geminiGradient, CircleShape),
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .border(1.dp, PrimaryTeal.copy(alpha = 0.35f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                    Image(
+                        painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
+                        contentDescription = "MediAware AI",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "MediAware Gemini AI",
+                        text = "MediAware AI স্বাস্থ্য সহকারী",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1506,7 +1495,7 @@ fun GeminiChatTopBar(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isOnline) "অনলাইন (Gemini 1.5)" else "অফলাইন মোড",
+                            text = if (isOnline) "অনলাইন স্বাস্থ্য সহকারী" else "অফলাইন মোড",
                             fontSize = 11.sp,
                             color = if (isOnline) Color(0xFF00C853) else Color(0xFFBA1A1A),
                             fontWeight = FontWeight.Medium
@@ -1795,14 +1784,6 @@ private fun GeminiGreetingHero(
     onPromptClick: (String) -> Unit,
     onScanClick: () -> Unit
 ) {
-    val geminiGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF4285F4),
-            Color(0xFF9B51E0),
-            Color(0xFF00ACC1)
-        )
-    )
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1811,15 +1792,16 @@ private fun GeminiGreetingHero(
     ) {
         Box(
             modifier = Modifier
-                .size(52.dp)
-                .background(geminiGradient, CircleShape),
+                .size(60.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .border(1.5.dp, PrimaryTeal.copy(alpha = 0.4f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(30.dp)
+            Image(
+                painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
+                contentDescription = "MediAware AI লোগো",
+                modifier = Modifier.size(48.dp)
             )
         }
 
@@ -1843,7 +1825,7 @@ private fun GeminiGreetingHero(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Gemini Prompt Suggestion Cards
+        // Quick Suggestion Cards: Strictly 4 health guidance cards
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -1854,22 +1836,22 @@ private fun GeminiGreetingHero(
             ) {
                 GeminiPromptCard(
                     modifier = Modifier.weight(1f),
-                    title = "ল্যাব রিপোর্ট স্ক্যান",
-                    desc = "সিবিসি বা সুগার রিপোর্ট বুঝুন",
+                    title = "ওষুধ নিয়ে জানুন (টেক্সট বা ছবি দিয়ে)",
+                    desc = "ব্যবহার ও ডোজের সঠিক নিয়ম",
+                    icon = Icons.Default.Medication,
+                    tint = WarmAmber,
+                    bgColor = CardBgAmber,
+                    borderColor = BorderAmberSoft,
+                    onClick = { onPromptClick("ওষুধের নাম লিখুন বা প্যাকেটের ছবি দিন, আমি এর সঠিক ব্যবহার, খাওয়ার নিয়ম ও সতর্কতা বুঝিয়ে দেব।") }
+                )
+                GeminiPromptCard(
+                    modifier = Modifier.weight(1f),
+                    title = "রিপোর্ট বুঝুন (ছবি দিয়ে)",
+                    desc = "ল্যাব পরীক্ষার ছবি বিশ্লেষণ",
                     icon = Icons.Default.Science,
                     tint = OceanBlue,
                     bgColor = CardBgOcean,
                     borderColor = BorderOceanSoft,
-                    onClick = onScanClick
-                )
-                GeminiPromptCard(
-                    modifier = Modifier.weight(1f),
-                    title = "প্রেসক্রিপশন ব্যাখ্যা",
-                    desc = "ডাক্তারের লেখা ও নিয়মাবলী",
-                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                    tint = EmeraldGreen,
-                    bgColor = CardBgMint,
-                    borderColor = BorderMintSoft,
                     onClick = onScanClick
                 )
             }
@@ -1880,23 +1862,23 @@ private fun GeminiGreetingHero(
             ) {
                 GeminiPromptCard(
                     modifier = Modifier.weight(1f),
-                    title = "ওষুধের নিয়ম",
-                    desc = "খাওয়ার আগে/পরে ও সতর্কতা",
-                    icon = Icons.Default.Medication,
-                    tint = WarmAmber,
-                    bgColor = CardBgAmber,
-                    borderColor = BorderAmberSoft,
-                    onClick = { onPromptClick("ওষুধ সেবনের সঠিক নিয়ম ও সতর্কতা সম্পর্কে জানাবেন?") }
+                    title = "প্রেসক্রিপশন বুঝুন (ছবি দিয়ে)",
+                    desc = "ব্যবস্থাপত্রের ছবি বিশ্লেষণ",
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                    tint = EmeraldGreen,
+                    bgColor = CardBgMint,
+                    borderColor = BorderMintSoft,
+                    onClick = onScanClick
                 )
                 GeminiPromptCard(
                     modifier = Modifier.weight(1f),
-                    title = "স্বাস্থ্য পরামর্শ",
-                    desc = "প্রেসার বা ডায়াবেটিসের যত্ন",
+                    title = "এআই স্বাস্থ্য পরামর্শ নিন",
+                    desc = "লক্ষণ বা স্বাস্থ্য জিজ্ঞাসা করুন",
                     icon = Icons.Default.MonitorHeart,
                     tint = AiPurple,
                     bgColor = CardBgPurple,
                     borderColor = BorderTealSoft,
-                    onClick = { onPromptClick("উচ্চ রক্তচাপ নিয়ন্ত্রণে রাখার সাধারণ নিয়মগুলো কী?") }
+                    onClick = { onPromptClick("আমার শারীরিক সুস্থতা বা লক্ষণ সংক্রান্ত পরামর্শ দিন।") }
                 )
             }
         }
@@ -1956,14 +1938,6 @@ private fun GeminiPromptCard(
 
 @Composable
 private fun GeminiChatBubble(message: ChatMessage) {
-    val geminiGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF4285F4),
-            Color(0xFF9B51E0),
-            Color(0xFF00ACC1)
-        )
-    )
-
     if (message.isFromUser) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -1996,14 +1970,15 @@ private fun GeminiChatBubble(message: ChatMessage) {
             Box(
                 modifier = Modifier
                     .size(30.dp)
-                    .background(geminiGradient, CircleShape),
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(1.dp, PrimaryTeal.copy(alpha = 0.35f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                Image(
+                    painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -2059,14 +2034,6 @@ private fun GeminiChatBubble(message: ChatMessage) {
 
 @Composable
 private fun GeminiThinkingIndicator() {
-    val geminiGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF4285F4),
-            Color(0xFF9B51E0),
-            Color(0xFF00ACC1)
-        )
-    )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -2076,14 +2043,15 @@ private fun GeminiThinkingIndicator() {
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .background(geminiGradient, CircleShape),
+                .clip(CircleShape)
+                .background(Color.White)
+                .border(1.dp, PrimaryTeal.copy(alpha = 0.35f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
+            Image(
+                painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
         Spacer(modifier = Modifier.width(10.dp))

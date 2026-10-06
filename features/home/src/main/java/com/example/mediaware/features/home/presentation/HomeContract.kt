@@ -22,6 +22,8 @@ data class HomeUiState(
     val bloodGroup: String? = null,
     val chronicConditions: List<String> = emptyList(),
     val isOnline: Boolean = true,
+    val selectedAvatarId: String = "avatar_teal",
+    val customPhotoUri: String? = null,
     val upcomingReminder: UpcomingReminderUiModel? = null,
     val recentConsultation: ConsultationEntity? = null,
     val recentConsultations: List<ConsultationEntity> = emptyList(),

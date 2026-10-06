@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.mediaware.core.common.ai.GeminiAiClient
 import com.example.mediaware.core.common.base.BaseViewModel
+import com.example.mediaware.core.common.settings.AppSettingsManager
 import com.example.mediaware.core.database.dao.ConsultationDao
 import com.example.mediaware.core.database.dao.HealthRecordDao
 import com.example.mediaware.core.database.entity.ConsultationEntity
@@ -50,6 +51,12 @@ data class ChatState(
     )
 )
 
+private data class ChatSettingsTuple(
+    val chat: ChatState,
+    val avatarId: String,
+    val photoUri: String?
+)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -57,6 +64,7 @@ class HomeViewModel @Inject constructor(
     private val consultationDao: ConsultationDao,
     private val healthRecordDao: HealthRecordDao,
     private val geminiAiClient: GeminiAiClient,
+    private val appSettingsManager: AppSettingsManager,
     @ApplicationContext private val context: Context,
     networkMonitor: NetworkMonitor
 ) : BaseViewModel<HomeUiState, HomeUiEvent, HomeSideEffect>(HomeUiState()) {
@@ -77,14 +85,24 @@ class HomeViewModel @Inject constructor(
         consultationDao.getAllConsultationsFlow(),
         healthRecordDao.getRecordsByTypeFlow("SYMPTOM_PREP"),
         healthRecordDao.getRecentRecordsFlow(5),
-        _chatState
-    ) { (user, nextReminder, isOnline), consultations, prepGuides, healthRecords, chat ->
+        combine(
+            _chatState,
+            appSettingsManager.selectedAvatarId,
+            appSettingsManager.customPhotoUri
+        ) { chat, avatarId, photoUri ->
+            ChatSettingsTuple(chat, avatarId, photoUri)
+        }
+    ) { userTuple, consultations, prepGuides, healthRecords, chatSettings ->
+        val (user, nextReminder, isOnline) = userTuple
+        val (chat, avatarId, photoUri) = chatSettings
         HomeUiState(
             userName = user?.fullName ?: "সম্মানিত ব্যবহারকারী",
             userAge = user?.age,
             bloodGroup = user?.bloodGroup,
             chronicConditions = user?.chronicConditions ?: emptyList(),
             isOnline = isOnline,
+            selectedAvatarId = avatarId,
+            customPhotoUri = photoUri,
             upcomingReminder = nextReminder?.let {
                 UpcomingReminderUiModel(
                     reminderId = it.reminder_id,
