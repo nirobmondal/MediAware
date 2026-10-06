@@ -546,9 +546,13 @@ fun ConsultationSummaryCard(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
-                                    if (summary.followUpReasonBn.isNotBlank()) {
+                                    val cleanReason = summary.followUpReasonBn.trim()
+                                    val isValidReason = cleanReason.isNotBlank() &&
+                                            !cleanReason.equals("null", ignoreCase = true) &&
+                                            !cleanReason.startsWith("null", ignoreCase = true)
+                                    if (isValidReason) {
                                         Text(
-                                            text = summary.followUpReasonBn,
+                                            text = cleanReason,
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )

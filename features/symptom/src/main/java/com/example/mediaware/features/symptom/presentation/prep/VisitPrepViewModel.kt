@@ -34,10 +34,20 @@ class VisitPrepViewModel @Inject constructor(
 
     private val banglaDateFormat = SimpleDateFormat("d MMMM yyyy, h:mm a", Locale.forLanguageTag("bn"))
 
+    private var lastSymptomIds: List<String> = emptyList()
+    private var lastSeverity: Int = 5
+    private var lastDurationBn: String = "কয়েক দিন"
+
     override fun onEvent(event: VisitPrepUiEvent) {
         when (event) {
             is VisitPrepUiEvent.GenerateCard -> {
+                lastSymptomIds = event.symptomIds
+                lastSeverity = event.severity
+                lastDurationBn = event.durationBn
                 generateCard(event.symptomIds, event.severity, event.durationBn)
+            }
+            VisitPrepUiEvent.OnRetry -> {
+                generateCard(lastSymptomIds, lastSeverity, lastDurationBn)
             }
             VisitPrepUiEvent.OnToggleTts -> {
                 val next = !uiState.value.isPlayingTts
@@ -54,7 +64,7 @@ class VisitPrepViewModel @Inject constructor(
 
     private fun generateCard(symptomIds: List<String>, severity: Int, durationBn: String) {
         viewModelScope.launch {
-            setState { copy(isLoading = true, isAiAnalyzing = true) }
+            setState { copy(isLoading = true, isNetworkError = false, isAiAnalyzing = true) }
             val profile = userRepository.getUserProfileFlow().firstOrNull()
             val catalog = SymptomCatalog.ALL_SYMPTOMS.associateBy { it.id }
             val resolvedSymptoms = symptomIds.map { id ->
@@ -64,20 +74,6 @@ class VisitPrepViewModel @Inject constructor(
                     anatomicalRegionBn = "লক্ষণ",
                     isRedFlagPotential = false,
                     iconName = "healing"
-                )
-            }
-
-            val initialCard = generateVisitPrepUseCase(
-                userProfile = profile,
-                symptoms = resolvedSymptoms,
-                severityRating = severity,
-                durationBn = durationBn
-            )
-
-            setState {
-                copy(
-                    visitCard = initialCard,
-                    isLoading = false
                 )
             }
 
@@ -98,7 +94,7 @@ class VisitPrepViewModel @Inject constructor(
                 "বয়স: ${it.age} বছর, লিঙ্গ: ${it.gender.displayNameBn}, দীর্ঘস্থায়ী রোগ: ${it.chronicConditions.joinToString()}"
             }
 
-            // Asynchronously generate AI Symptom Plan & Doctor Cheat Questions
+            // Asynchronously generate 100% dynamic AI Symptom Plan & Doctor Cheat Questions
             val planResult = geminiAiClient.planSymptomConsultation(
                 symptoms = resolvedSymptoms.map { it.nameBn },
                 severity = severity,
@@ -108,59 +104,65 @@ class VisitPrepViewModel @Inject constructor(
                 userProfileSummary = userSummary
             )
 
-            val updatedSpeakingPoints = if (planResult.speakingPoints.isNotEmpty()) {
-                planResult.speakingPoints
-            } else {
-                initialCard.doctorSpeakingPointsBn
-            }
-
-            val updatedQuestions = if (planResult.cheatQuestionsForDoctor.isNotEmpty()) {
-                planResult.cheatQuestionsForDoctor
-            } else {
-                initialCard.doctorQuestionsBn
-            }
-
-            val updatedCard = initialCard.copy(
-                doctorSpeakingPointsBn = updatedSpeakingPoints,
-                doctorQuestionsBn = updatedQuestions,
-                suggestedSpecialistBn = planResult.suggestedSpecialistBn
-            )
-
-            // Automatically persist this visit prep into Room SQLite Health Memory
-            try {
-                val prepRecord = HealthRecordEntity(
-                    id = UUID.randomUUID().toString(),
-                    timestamp = System.currentTimeMillis(),
-                    dateFormattedBn = banglaDateFormat.format(Date()).toBengaliDigits(),
-                    recordType = "SYMPTOM_PREP",
-                    title = "ভিজিট প্রস্তুতি: ${resolvedSymptoms.joinToString { it.nameBn }}",
-                    summaryBn = planResult.triageAssessmentBn,
-                    detailsJson = JSONObject().apply {
-                        put("speakingPoints", JSONArray(updatedSpeakingPoints))
-                        put("whatToShowDoctor", JSONArray(planResult.whatToShowDoctor))
-                        put("cheatQuestions", JSONArray(updatedQuestions))
-                        put("homeCareAdvice", planResult.homeCareAdviceBn)
-                        put("suggestedSpecialist", planResult.suggestedSpecialistBn)
-                        put("symptoms", JSONArray(resolvedSymptoms.map { it.nameBn }))
-                    }.toString(),
-                    sourceGrounding = "DGHS & WHO Triage Protocol"
+            if (planResult != null) {
+                val dynamicCard = generateVisitPrepUseCase(
+                    userProfile = profile,
+                    symptoms = resolvedSymptoms,
+                    severityRating = severity,
+                    durationBn = durationBn
+                ).copy(
+                    doctorSpeakingPointsBn = planResult.speakingPoints,
+                    doctorQuestionsBn = planResult.cheatQuestionsForDoctor,
+                    suggestedSpecialistBn = planResult.suggestedSpecialistBn
                 )
-                healthRecordDao.insertRecord(prepRecord)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to persist symptom prep to health memory")
-            }
 
-            setState {
-                copy(
-                    visitCard = updatedCard,
-                    aiSymptomAnalysisBn = planResult.triageAssessmentBn,
-                    aiCheatQuestions = updatedQuestions,
-                    whatToShowDoctor = planResult.whatToShowDoctor,
-                    homeCareAdviceBn = planResult.homeCareAdviceBn,
-                    needsDoctorVisit = planResult.needsDoctorVisit,
-                    isSavedToHealthMemory = true,
-                    isAiAnalyzing = false
-                )
+                // Automatically persist this 100% dynamic visit prep into Room SQLite Health Memory
+                try {
+                    val prepRecord = HealthRecordEntity(
+                        id = UUID.randomUUID().toString(),
+                        timestamp = System.currentTimeMillis(),
+                        dateFormattedBn = banglaDateFormat.format(Date()).toBengaliDigits(),
+                        recordType = "SYMPTOM_PREP",
+                        title = "ভিজিট প্রস্তুতি: ${resolvedSymptoms.joinToString { it.nameBn }}",
+                        summaryBn = planResult.triageAssessmentBn,
+                        detailsJson = JSONObject().apply {
+                            put("speakingPoints", JSONArray(planResult.speakingPoints))
+                            put("whatToShowDoctor", JSONArray(planResult.whatToShowDoctor))
+                            put("cheatQuestions", JSONArray(planResult.cheatQuestionsForDoctor))
+                            put("homeCareAdvice", planResult.homeCareAdviceBn)
+                            put("suggestedSpecialist", planResult.suggestedSpecialistBn)
+                            put("symptoms", JSONArray(resolvedSymptoms.map { it.nameBn }))
+                        }.toString(),
+                        sourceGrounding = "DGHS & WHO Triage Protocol"
+                    )
+                    healthRecordDao.insertRecord(prepRecord)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to persist symptom prep to health memory")
+                }
+
+                setState {
+                    copy(
+                        visitCard = dynamicCard,
+                        aiSymptomAnalysisBn = planResult.triageAssessmentBn,
+                        aiCheatQuestions = planResult.cheatQuestionsForDoctor,
+                        whatToShowDoctor = planResult.whatToShowDoctor,
+                        homeCareAdviceBn = planResult.homeCareAdviceBn,
+                        needsDoctorVisit = planResult.needsDoctorVisit,
+                        isSavedToHealthMemory = true,
+                        isLoading = false,
+                        isNetworkError = false,
+                        isAiAnalyzing = false
+                    )
+                }
+            } else {
+                // If offline / network error, inform UI to show retry state rather than fabricated templates
+                setState {
+                    copy(
+                        isLoading = false,
+                        isNetworkError = true,
+                        isAiAnalyzing = false
+                    )
+                }
             }
         }
     }

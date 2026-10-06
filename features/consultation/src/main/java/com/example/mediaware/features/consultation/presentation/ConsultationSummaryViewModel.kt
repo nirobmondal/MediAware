@@ -149,7 +149,8 @@ class ConsultationSummaryViewModel @Inject constructor(
         val chosenDays = _uiState.value.customFollowUpDaysMap[consultationId] ?: if (currentSummary.followUpDays > 0) currentSummary.followUpDays else 7
         val followUpMillis = customTimestamp ?: (System.currentTimeMillis() + (chosenDays.toLong().coerceAtLeast(1L) * 24L * 60L * 60L * 1000L))
         val title = "ডাক্তার ফলো-আপ ভিজিট: ${currentSummary.doctorName}"
-        val description = "ফলো-আপ কারণ: ${currentSummary.followUpReasonBn}\n\nকরণীয়:\n" +
+        val reasonPrefix = if (currentSummary.followUpReasonBn.isNotBlank()) "ফলো-আপ কারণ: ${currentSummary.followUpReasonBn}\n\n" else ""
+        val description = "${reasonPrefix}করণীয়:\n" +
                 currentSummary.actionItems.joinToString("\n") { "• ${it.task}" }
 
         _uiState.update {
@@ -223,6 +224,18 @@ class ConsultationSummaryViewModel @Inject constructor(
             // Ignore JSON decode error
         }
 
+        val cleanReason = if (followUpReasonBn.isBlank() || followUpReasonBn.equals("null", ignoreCase = true) || followUpReasonBn.startsWith("null", ignoreCase = true)) {
+            ""
+        } else {
+            followUpReasonBn.trim()
+        }
+
+        val cleanDateStr = if (followUpDateStringBn.isBlank() || followUpDateStringBn.equals("null", ignoreCase = true) || followUpDateStringBn.startsWith("null", ignoreCase = true)) {
+            ""
+        } else {
+            followUpDateStringBn.trim()
+        }
+
         return ConsultationSummary(
             id = id,
             doctorName = doctorName,
@@ -231,8 +244,8 @@ class ConsultationSummaryViewModel @Inject constructor(
             actionItems = items,
             pendingQuestions = questions,
             followUpDays = followUpDays,
-            followUpDateStringBn = followUpDateStringBn,
-            followUpReasonBn = followUpReasonBn
+            followUpDateStringBn = cleanDateStr,
+            followUpReasonBn = cleanReason
         )
     }
 }

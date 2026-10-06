@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -366,6 +367,11 @@ fun HomeScreen(
             ) {
                 ConsultationPrepDetailSheetContent(
                     record = guide,
+                    totalGuidesCount = uiState.recentPreparationGuides.size,
+                    onOpenHistory = {
+                        selectedPrepGuideForSheet = null
+                        showPrepGuidesHistorySheet = true
+                    },
                     onDismiss = { selectedPrepGuideForSheet = null }
                 )
             }
@@ -422,8 +428,7 @@ private fun HomeDashboardContent(
             DoctorSuggestionFeatureCard(
                 recentConsultation = uiState.recentConsultation ?: uiState.recentConsultations.firstOrNull(),
                 onNavigateToConsultationSummary = onNavigateToConsultationSummary,
-                onRequestRecordAudio = onRequestRecordAudio,
-                onUpdateFollowUpDate = onUpdateFollowUpDate
+                onRequestRecordAudio = onRequestRecordAudio
             )
         }
 
@@ -438,9 +443,7 @@ private fun HomeDashboardContent(
         item {
             ConsultationPrepGuideFeatureCard(
                 latestGuide = uiState.recentPreparationGuides.firstOrNull(),
-                totalGuidesCount = uiState.recentPreparationGuides.size,
                 onViewLatestGuide = { guide -> onSelectPrepGuide(guide) },
-                onOpenHistory = onOpenPrepGuidesHistory,
                 onStartSymptomAnalysis = onNavigateToSymptomSelect
             )
         }
@@ -533,11 +536,8 @@ private fun RecordAudioFeatureCard(
 private fun DoctorSuggestionFeatureCard(
     recentConsultation: ConsultationEntity?,
     onNavigateToConsultationSummary: () -> Unit,
-    onRequestRecordAudio: () -> Unit,
-    onUpdateFollowUpDate: (String, Long) -> Unit
+    onRequestRecordAudio: () -> Unit
 ) {
-    val context = LocalContext.current
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -545,6 +545,7 @@ private fun DoctorSuggestionFeatureCard(
         border = BorderStroke(1.2.dp, BorderOceanSoft)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -572,7 +573,7 @@ private fun DoctorSuggestionFeatureCard(
                     )
                     Text(
                         text = recentConsultation?.doctorName?.ifBlank { "সর্বশেষ চেম্বার পরামর্শ" }
-                            ?: "এআই পরামর্শ ও দিকনির্দেশনা",
+                            ?: "চেম্বারের দিকনির্দেশনা ও ইতিহাস",
                         fontSize = 12.sp,
                         color = OceanBlue,
                         fontWeight = FontWeight.SemiBold
@@ -599,148 +600,59 @@ private fun DoctorSuggestionFeatureCard(
 
             if (recentConsultation != null) {
                 Text(
-                    text = recentConsultation.summaryBn,
+                    text = recentConsultation.summaryBn.ifBlank { "ডাক্তারের পরামর্শ ও দিকনির্দেশনার সারাংশ সংরক্ষিত রয়েছে।" },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     lineHeight = 16.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                val rawDate = recentConsultation.followUpDateStringBn.trim()
-                val isNullOrInvalid = rawDate.isBlank() || rawDate.equals("null", ignoreCase = true) || rawDate.startsWith("null", ignoreCase = true)
-                val followUpDateText = if (!isNullOrInvalid) {
-                    rawDate
-                } else if (recentConsultation.followUpDays > 0) {
-                    "${recentConsultation.followUpDays.toString().toBengaliDigits()} দিন পর"
-                } else {
-                    "তারিখ নির্ধারণ করুন"
-                }
-
-                // Interactive Dynamic Follow-Up Date Picker Section
-                Surface(
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, OceanBlue.copy(alpha = 0.25f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarToday,
-                                contentDescription = null,
-                                tint = OceanBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "পরবর্তী ফলো-আপ ভিজিট",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = followUpDateText,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = OceanBlue
-                                )
-                            }
-                        }
-
-                        TextButton(
-                            onClick = {
-                                val cal = Calendar.getInstance()
-                                val defaultMillis = if (recentConsultation.followUpDays > 0) {
-                                    System.currentTimeMillis() + (recentConsultation.followUpDays.toLong() * 24L * 60L * 60L * 1000L)
-                                } else {
-                                    System.currentTimeMillis() + (7L * 24L * 60L * 60L * 1000L)
-                                }
-                                cal.timeInMillis = defaultMillis
-
-                                DatePickerDialog(
-                                    context,
-                                    { _, year, month, dayOfMonth ->
-                                        val pickedCal = Calendar.getInstance().apply {
-                                            set(Calendar.YEAR, year)
-                                            set(Calendar.MONTH, month)
-                                            set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                                            set(Calendar.HOUR_OF_DAY, 9)
-                                            set(Calendar.MINUTE, 0)
-                                            set(Calendar.SECOND, 0)
-                                        }
-                                        onUpdateFollowUpDate(recentConsultation.id, pickedCal.timeInMillis)
-                                    },
-                                    cal.get(Calendar.YEAR),
-                                    cal.get(Calendar.MONTH),
-                                    cal.get(Calendar.DAY_OF_MONTH)
-                                ).apply {
-                                    datePicker.minDate = System.currentTimeMillis() + (24L * 60L * 60L * 1000L)
-                                }.show()
-                            },
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "তারিখ পরিবর্তন",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OceanBlue
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onNavigateToConsultationSummary) {
-                        Text(
-                            text = "সম্পূর্ণ বিবরণ দেখুন",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = OceanBlue
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = OceanBlue,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
-            } else {
-                Text(
-                    text = "ডাক্তারের সাথে আলোচনার অডিও রেকর্ড করুন। এখানে স্বয়ংক্রিয় এআই পরামর্শ ও পরবর্তী ফলো-আপ ভিজিট সংরক্ষিত থাকবে।",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 16.sp
-                )
                 Spacer(modifier = Modifier.height(12.dp))
+
                 Button(
-                    onClick = onRequestRecordAudio,
+                    onClick = onNavigateToConsultationSummary,
                     colors = ButtonDefaults.buttonColors(containerColor = OceanBlue),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "পরামর্শ রেকর্ড শুরু করুন",
-                        fontSize = 12.sp,
+                        text = "পরামর্শ ও দিকনির্দেশনা দেখুন",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 13.sp
+                    )
+                }
+            } else {
+                Text(
+                    text = "পূর্বে সংরক্ষিত ডাক্তারের দিকনির্দেশনা, ওষুধের নিয়মাবলি ও চেম্বার সারাংশ পর্যালোচনা করুন।",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onNavigateToConsultationSummary,
+                    colors = ButtonDefaults.buttonColors(containerColor = OceanBlue),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "পরামর্শ তালিকা দেখুন",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
                     )
                 }
             }
@@ -829,9 +741,7 @@ private fun SymptomsAnalysisFeatureCard(
 @Composable
 private fun ConsultationPrepGuideFeatureCard(
     latestGuide: HealthRecordEntity?,
-    totalGuidesCount: Int,
     onViewLatestGuide: (HealthRecordEntity) -> Unit,
-    onOpenHistory: () -> Unit,
     onStartSymptomAnalysis: () -> Unit
 ) {
     Card(
@@ -841,7 +751,7 @@ private fun ConsultationPrepGuideFeatureCard(
         border = BorderStroke(1.2.dp, BorderTealSoft)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -869,7 +779,7 @@ private fun ConsultationPrepGuideFeatureCard(
                     )
                     Text(
                         text = latestGuide?.title?.ifBlank { "ভিজিট চেকলিস্ট ও প্রস্তুতি" }
-                            ?: "ভিজিট চেকলিস্ট ও গাইড",
+                            ?: "ভিজিট চেকলিস্ট ও পূর্বপ্রস্তুতি",
                         fontSize = 12.sp,
                         color = AiPurple,
                         fontWeight = FontWeight.SemiBold
@@ -896,61 +806,32 @@ private fun ConsultationPrepGuideFeatureCard(
 
             if (latestGuide != null) {
                 Text(
-                    text = "ডাক্তার দেখানোর ৩ দফা চেকলিস্ট:",
+                    text = latestGuide.summaryBn.ifBlank { "চেম্বারে ডাক্তারের কাছে ৩০ সেকেন্ডে তুলে ধরার পয়েন্ট ও প্রয়োজনীয় প্রশ্নাবলি প্রস্তুত রয়েছে।" },
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    lineHeight = 16.sp
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    PrepChecklistRowItem(label = "১. ডাক্তারের কাছে তুলে ধরবেন (৩০ সেকেন্ড পয়েন্ট)")
-                    PrepChecklistRowItem(label = "২. ডাক্তারকে যা যা দেখাতে হবে (পূর্বের রিপোর্ট/ওষুধ)")
-                    PrepChecklistRowItem(label = "৩. ডাক্তারকে যেসব প্রশ্ন করবেন (প্রয়োজনীয় প্রশ্নাবলি)")
-                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Button(
+                    onClick = { onViewLatestGuide(latestGuide) },
+                    colors = ButtonDefaults.buttonColors(containerColor = AiPurple),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (totalGuidesCount > 1) {
-                        TextButton(
-                            onClick = onOpenHistory,
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.HistoryEdu,
-                                contentDescription = null,
-                                tint = AiPurple,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "পূর্বের গাইডসমূহ (${totalGuidesCount.toString().toBengaliDigits()})",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AiPurple
-                            )
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-
-                    Button(
-                        onClick = { onViewLatestGuide(latestGuide) },
-                        colors = ButtonDefaults.buttonColors(containerColor = AiPurple),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "সম্পূর্ণ গাইড দেখুন",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.BookmarkAdded,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "প্রস্তুতি গাইড দেখুন",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
                 }
             } else {
                 Text(
@@ -959,43 +840,29 @@ private fun ConsultationPrepGuideFeatureCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 16.sp
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
+
                 Button(
                     onClick = onStartSymptomAnalysis,
                     colors = ButtonDefaults.buttonColors(containerColor = AiPurple),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "প্রস্তুতি শুরু করুন",
-                        fontSize = 12.sp,
+                        text = "নতুন প্রস্তুতি শুরু করুন",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 13.sp
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PrepChecklistRowItem(label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = null,
-            tint = EmeraldGreen,
-            modifier = Modifier.size(14.dp)
-        )
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 
@@ -1177,6 +1044,8 @@ private fun PrepGuidesHistorySheetContent(
 @Composable
 private fun ConsultationPrepDetailSheetContent(
     record: HealthRecordEntity,
+    totalGuidesCount: Int = 1,
+    onOpenHistory: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val parsedData = remember(record) {
@@ -1242,6 +1111,28 @@ private fun ConsultationPrepDetailSheetContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                if (totalGuidesCount > 1 && onOpenHistory != null) {
+                    TextButton(
+                        onClick = onOpenHistory,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HistoryEdu,
+                            contentDescription = null,
+                            tint = AiPurple,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "পূর্বের গাইডসমূহ (${totalGuidesCount.toString().toBengaliDigits()})",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AiPurple
+                        )
+                    }
+                }
+
                 IconButton(onClick = onDismiss) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "বন্ধ করুন")
                 }

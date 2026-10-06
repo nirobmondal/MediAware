@@ -15,11 +15,13 @@ data class VisitPrepUiState(
     val isSavedToHealthMemory: Boolean = false,
     val isAiAnalyzing: Boolean = false,
     val isLoading: Boolean = true,
+    val isNetworkError: Boolean = false,
     val isPlayingTts: Boolean = false
 ) : ViewState
 
 sealed interface VisitPrepUiEvent : ViewEvent {
     data class GenerateCard(val symptomIds: List<String>, val severity: Int, val durationBn: String) : VisitPrepUiEvent
+    data object OnRetry : VisitPrepUiEvent
     data object OnToggleTts : VisitPrepUiEvent
     data object OnFinishAndGoHome : VisitPrepUiEvent
 }
