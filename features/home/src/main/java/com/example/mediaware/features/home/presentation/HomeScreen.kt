@@ -7,6 +7,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.app.DatePickerDialog
+import java.util.Calendar
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -151,9 +155,24 @@ fun HomeScreen(
     onNavigateToMedicineHistory: () -> Unit = {},
     onNavigateToReminders: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.combinedState.collectAsState()
     var showRecordGuideDialog by remember { mutableStateOf(false) }
     var selectedPrepGuideForSheet by remember { mutableStateOf<HealthRecordEntity?>(null) }
+    var showPrepGuidesHistorySheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is HomeSideEffect.ShowToast -> {
+                    Toast.makeText(context, effect.messageBn, Toast.LENGTH_SHORT).show()
+                }
+                is HomeSideEffect.NavigateTo -> {
+                    // Handled if needed
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -167,22 +186,23 @@ fun HomeScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "MediAware",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
+                            UserAvatarView(
+                                avatarId = uiState.selectedAvatarId,
+                                photoUriString = uiState.customPhotoUri,
+                                size = 38.dp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                color = PrimaryTeal.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
                                 Text(
-                                    text = "আপনার স্বাস্থ্য সহায়ক",
+                                    text = "স্বাগতম,",
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = PrimaryTeal,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = uiState.userName.ifBlank { "ব্যবহারকারী" },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -253,7 +273,11 @@ fun HomeScreen(
                 onRequestRecordAudio = { showRecordGuideDialog = true },
                 onNavigateToSymptomSelect = onNavigateToSymptomSelect,
                 onNavigateToConsultationSummary = onNavigateToConsultationSummary,
-                onSelectPrepGuide = { guide -> selectedPrepGuideForSheet = guide }
+                onSelectPrepGuide = { guide -> selectedPrepGuideForSheet = guide },
+                onOpenPrepGuidesHistory = { showPrepGuidesHistorySheet = true },
+                onUpdateFollowUpDate = { consultationId, millis ->
+                    viewModel.onEvent(HomeUiEvent.OnUpdateFollowUpDate(consultationId, millis))
+                }
             )
         }
 
@@ -340,6 +364,24 @@ fun HomeScreen(
                 )
             }
         }
+
+        if (showPrepGuidesHistorySheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showPrepGuidesHistorySheet = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                PrepGuidesHistorySheetContent(
+                    guides = uiState.recentPreparationGuides,
+                    onSelectGuide = { guide ->
+                        showPrepGuidesHistorySheet = false
+                        selectedPrepGuideForSheet = guide
+                    },
+                    onDismiss = { showPrepGuidesHistorySheet = false }
+                )
+            }
+        }
     }
 }
 
@@ -350,7 +392,9 @@ private fun HomeDashboardContent(
     onRequestRecordAudio: () -> Unit,
     onNavigateToSymptomSelect: () -> Unit,
     onNavigateToConsultationSummary: () -> Unit,
-    onSelectPrepGuide: (HealthRecordEntity) -> Unit
+    onSelectPrepGuide: (HealthRecordEntity) -> Unit,
+    onOpenPrepGuidesHistory: () -> Unit,
+    onUpdateFollowUpDate: (String, Long) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -358,277 +402,60 @@ private fun HomeDashboardContent(
     ) {
         item {
             Spacer(modifier = Modifier.height(2.dp))
-            if (!uiState.isOnline) {
-                OfflineBanner()
-            }
         }
 
-        // Patient Profile Snapshot Card
+        // Feature Card 1: Record Audio (ডাক্তার পরামর্শ অডিও রেকর্ড)
         item {
-            PatientProfileHeaderCard(uiState = uiState)
+            RecordAudioFeatureCard(
+                onClick = onRequestRecordAudio
+            )
         }
 
-        // Doctor Consultation Audio Recording Card
+        // Feature Card 2: Doctor Suggestion (ডাক্তার পরামর্শ ও নির্দেশনা)
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onRequestRecordAudio),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBgTeal),
-                border = BorderStroke(1.2.dp, BorderTealSoft)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .background(PrimaryTeal, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Mic,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "ডাক্তার পরামর্শ অডিও রেকর্ড",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "চেম্বারের কথোপকথন রেকর্ড ও এআই সারাংশ",
-                                    fontSize = 12.sp,
-                                    color = PrimaryTeal,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-
-                        Surface(
-                            color = PrimaryTeal,
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "রেকর্ড করুন",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "চেম্বারে ডাক্তারের পরামর্শ সরাসরি রেকর্ড করুন। স্বয়ংক্রিয় এআই সারাংশ ও ফলো-আপ পরিকল্পনা তৈরি হবে।",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 16.sp
-                    )
-                }
-            }
+            DoctorSuggestionFeatureCard(
+                recentConsultation = uiState.recentConsultation ?: uiState.recentConsultations.firstOrNull(),
+                onNavigateToConsultationSummary = onNavigateToConsultationSummary,
+                onRequestRecordAudio = onRequestRecordAudio,
+                onUpdateFollowUpDate = onUpdateFollowUpDate
+            )
         }
 
-        // Symptoms Analysis & Doctor Visit Preparation Card
+        // Feature Card 3: Symptoms Analysis (লক্ষণ বিশ্লেষণ ও এআই পরামর্শ)
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onNavigateToSymptomSelect),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBgMint),
-                border = BorderStroke(1.2.dp, BorderMintSoft)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .background(EmeraldGreen, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Healing,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "লক্ষণ বিশ্লেষণ ও ভিজিট প্রস্তুতি",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "লক্ষণভিত্তিক প্রশ্নাবলি ও প্রস্তুতি গাইড",
-                                    fontSize = 12.sp,
-                                    color = EmeraldGreen,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-
-                        Surface(
-                            color = EmeraldGreen,
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "শুরু করুন",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "শারীরিক লক্ষণ জানিয়ে ডাক্তার দেখানোর ৩০ সেকেন্ড স্পিকিং পয়েন্ট ও প্রশ্নাবলি প্রস্তুত করুন।",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 16.sp
-                    )
-                }
-            }
+            SymptomsAnalysisFeatureCard(
+                onClick = onNavigateToSymptomSelect
+            )
         }
 
-        // Next Dose / Upcoming Reminder (if available)
-        uiState.upcomingReminder?.let { reminder ->
-            item {
-                NextDoseCard(reminder = reminder)
-            }
-        }
-
-        // Doctor Suggestions Section (ডাক্তার পরামর্শ ও নির্দেশনা)
+        // Feature Card 4: Consultation Preparation Guide (কনসালটেশন প্রস্তুতি গাইড)
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ডাক্তার পরামর্শ ও নির্দেশনা",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (uiState.recentConsultations.isNotEmpty()) {
-                    TextButton(onClick = onNavigateToConsultationSummary) {
-                        Text(
-                            text = "সকল সারাংশ দেখুন",
-                            fontSize = 12.sp,
-                            color = PrimaryTeal,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = PrimaryTeal,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        if (uiState.recentConsultations.isNotEmpty()) {
-            val displayConsultations = uiState.recentConsultations.take(3)
-            items(displayConsultations, key = { it.id }) { consultation ->
-                DoctorSuggestionItemCard(
-                    consultation = consultation,
-                    onClick = onNavigateToConsultationSummary
-                )
-            }
-        } else {
-            item {
-                EmptyDoctorSuggestionsCard(onStartRecording = onRequestRecordAudio)
-            }
-        }
-
-        // Consultation Preparation Guide Section (কনসালটেশন প্রস্তুতি গাইড)
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "কনসালটেশন প্রস্তুতি গাইড",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (uiState.recentPreparationGuides.isNotEmpty()) {
-                    Surface(
-                        color = EmeraldGreen.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "${uiState.recentPreparationGuides.size.toString().toBengaliDigits()}টি গাইড",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = EmeraldGreen,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        if (uiState.recentPreparationGuides.isNotEmpty()) {
-            val displayGuides = uiState.recentPreparationGuides.take(3)
-            items(displayGuides, key = { it.id }) { guide ->
-                ConsultationPrepGuideItemCard(
-                    guide = guide,
-                    onClick = { onSelectPrepGuide(guide) }
-                )
-            }
-        } else {
-            item {
-                EmptyPrepGuidesCard(onStartSymptomAnalysis = onNavigateToSymptomSelect)
-            }
+            ConsultationPrepGuideFeatureCard(
+                latestGuide = uiState.recentPreparationGuides.firstOrNull(),
+                totalGuidesCount = uiState.recentPreparationGuides.size,
+                onViewLatestGuide = { guide -> onSelectPrepGuide(guide) },
+                onOpenHistory = onOpenPrepGuidesHistory,
+                onStartSymptomAnalysis = onNavigateToSymptomSelect
+            )
         }
 
         item {
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun PatientProfileHeaderCard(uiState: HomeUiState) {
+private fun RecordAudioFeatureCard(
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBgTeal),
-        border = BorderStroke(1.dp, BorderTealSoft)
+        border = BorderStroke(1.2.dp, BorderTealSoft)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -636,124 +463,85 @@ private fun PatientProfileHeaderCard(uiState: HomeUiState) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    UserAvatarView(
-                        avatarId = uiState.selectedAvatarId,
-                        photoUriString = uiState.customPhotoUri,
-                        size = 40.dp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(PrimaryTeal, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "স্বাগতম,",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = uiState.userName,
-                            fontSize = 18.sp,
+                            text = "ডাক্তার পরামর্শ অডিও রেকর্ড",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Text(
+                            text = "চেম্বারের কথোপকথন রেকর্ড ও এআই সারাংশ",
+                            fontSize = 12.sp,
+                            color = PrimaryTeal,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
 
-                uiState.bloodGroup?.let { bg ->
-                    Surface(
-                        color = Color(0xFFC62828).copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Bloodtype,
-                                contentDescription = null,
-                                tint = Color(0xFFC62828),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = bg,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFC62828)
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (uiState.userAge != null || uiState.chronicConditions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = PrimaryTeal,
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    uiState.userAge?.let { age ->
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "বয়স: ${age.toString().toBengaliDigits()} বছর",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-
-                    if (uiState.chronicConditions.isNotEmpty()) {
-                        Surface(
-                            color = PrimaryTeal.copy(alpha = 0.08f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MonitorHeart,
-                                    contentDescription = null,
-                                    tint = PrimaryTeal,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = uiState.chronicConditions.joinToString(", "),
-                                    fontSize = 11.sp,
-                                    color = PrimaryTeal,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = "রেকর্ড করুন",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "চেম্বারে ডাক্তারের আলোচনা সরাসরি রেকর্ড করুন। কথা শেষ হলে স্বয়ংক্রিয়ভাবে সহজ ভাষায় দিকনির্দেশনা ও ফলো-আপ পরিকল্পনা তৈরি হবে।",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 17.sp
+            )
         }
     }
 }
 
 @Composable
-private fun DoctorSuggestionItemCard(
-    consultation: ConsultationEntity,
-    onClick: () -> Unit
+private fun DoctorSuggestionFeatureCard(
+    recentConsultation: ConsultationEntity?,
+    onNavigateToConsultationSummary: () -> Unit,
+    onRequestRecordAudio: () -> Unit,
+    onUpdateFollowUpDate: (String, Long) -> Unit
 ) {
+    val context = LocalContext.current
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBgOcean),
-        border = BorderStroke(1.dp, BorderOceanSoft)
+        border = BorderStroke(1.2.dp, BorderOceanSoft)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -761,76 +549,191 @@ private fun DoctorSuggestionItemCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .background(OceanBlue.copy(alpha = 0.12f), CircleShape),
+                            .size(44.dp)
+                            .background(OceanBlue, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.MedicalInformation,
                             contentDescription = null,
-                            tint = OceanBlue,
-                            modifier = Modifier.size(18.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = consultation.doctorName.ifBlank { "ডাক্তার পরামর্শ" },
+                            text = "ডাক্তার পরামর্শ ও নির্দেশনা",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        if (consultation.followUpReasonBn.isNotBlank()) {
+                        Text(
+                            text = recentConsultation?.doctorName?.ifBlank { "সর্বশেষ চেম্বার পরামর্শ" }
+                                ?: "এআই পরামর্শ ও দিকনির্দেশনা",
+                            fontSize = 12.sp,
+                            color = OceanBlue,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                recentConsultation?.let { consultation ->
+                    Surface(
+                        color = OceanBlue.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = consultation.dateFormattedBn,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = OceanBlue,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (recentConsultation != null) {
+                Text(
+                    text = recentConsultation.summaryBn,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    lineHeight = 17.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Interactive Dynamic Follow-Up Date Picker Section
+                Surface(
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, OceanBlue.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = OceanBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "পরবর্তী ফলো-আপ ভিজিট",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = recentConsultation.followUpDateStringBn.ifBlank {
+                                        if (recentConsultation.followUpDays > 0)
+                                            "${recentConsultation.followUpDays.toString().toBengaliDigits()} দিন পর"
+                                        else
+                                            "তারিখ নির্ধারণ করুন"
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OceanBlue
+                                )
+                            }
+                        }
+
+                        TextButton(
+                            onClick = {
+                                val cal = Calendar.getInstance()
+                                val defaultMillis = if (recentConsultation.followUpDays > 0) {
+                                    System.currentTimeMillis() + (recentConsultation.followUpDays.toLong() * 24L * 60L * 60L * 1000L)
+                                } else {
+                                    System.currentTimeMillis() + (7L * 24L * 60L * 60L * 1000L)
+                                }
+                                cal.timeInMillis = defaultMillis
+
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val pickedCal = Calendar.getInstance().apply {
+                                            set(Calendar.YEAR, year)
+                                            set(Calendar.MONTH, month)
+                                            set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                                            set(Calendar.HOUR_OF_DAY, 9)
+                                            set(Calendar.MINUTE, 0)
+                                            set(Calendar.SECOND, 0)
+                                        }
+                                        onUpdateFollowUpDate(recentConsultation.id, pickedCal.timeInMillis)
+                                    },
+                                    cal.get(Calendar.YEAR),
+                                    cal.get(Calendar.MONTH),
+                                    cal.get(Calendar.DAY_OF_MONTH)
+                                ).apply {
+                                    datePicker.minDate = System.currentTimeMillis() + (24L * 60L * 60L * 1000L)
+                                }.show()
+                            },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
                             Text(
-                                text = consultation.followUpReasonBn,
+                                text = "তারিখ পরিবর্তন",
                                 fontSize = 11.sp,
-                                color = OceanBlue,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Bold,
+                                color = OceanBlue
                             )
                         }
                     }
                 }
 
-                Surface(
-                    color = OceanBlue.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = consultation.dateFormattedBn,
-                        fontSize = 10.sp,
-                        color = OceanBlue,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = consultation.summaryBn,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                lineHeight = 16.sp
-            )
-
-            if (consultation.followUpDays > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        tint = OceanBlue,
-                        modifier = Modifier.size(13.dp)
-                    )
+                    TextButton(onClick = onNavigateToConsultationSummary) {
+                        Text(
+                            text = "সম্পূর্ণ বিবরণ দেখুন",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OceanBlue
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = OceanBlue,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "ডাক্তারের সাথে আলোচনার অডিও রেকর্ড করুন। এখানে স্বয়ংক্রিয় এআই পরামর্শ, চিকিৎসকের নির্দেশনা এবং পরবর্তী ফলো-আপ ভিজিটের ক্যালেন্ডার তারিখ প্রদর্শিত হবে।",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 17.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onRequestRecordAudio,
+                    colors = ButtonDefaults.buttonColors(containerColor = OceanBlue),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
                     Text(
-                        text = "${consultation.followUpDays.toString().toBengaliDigits()} দিন পর পরবর্তী ফলো-আপ ভিজিট",
-                        fontSize = 11.sp,
-                        color = OceanBlue,
-                        fontWeight = FontWeight.SemiBold
+                        text = "পরামর্শ রেকর্ড করুন",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
             }
@@ -839,55 +742,257 @@ private fun DoctorSuggestionItemCard(
 }
 
 @Composable
-private fun EmptyDoctorSuggestionsCard(onStartRecording: () -> Unit) {
+private fun SymptomsAnalysisFeatureCard(
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBgMint),
+        border = BorderStroke(1.2.dp, BorderMintSoft)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(EmeraldGreen, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Healing,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "লক্ষণ বিশ্লেষণ ও এআই পরামর্শ",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "শারীরিক লক্ষণ ও প্রস্তুতি",
+                            fontSize = 12.sp,
+                            color = EmeraldGreen,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Surface(
+                    color = EmeraldGreen,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "শুরু করুন",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "শারীরিক লক্ষণ ইনপুট দিন, এআই ব্যাখ্যা জানুন এবং ডাক্তারকে তুলে ধরার জন্য ৩০ সেকেন্ড স্পিকিং পয়েন্ট ও প্রশ্নাবলির প্রস্তুতি সম্পন্ন করুন।",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 17.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConsultationPrepGuideFeatureCard(
+    latestGuide: HealthRecordEntity?,
+    totalGuidesCount: Int,
+    onViewLatestGuide: (HealthRecordEntity) -> Unit,
+    onOpenHistory: () -> Unit,
+    onStartSymptomAnalysis: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBgTeal),
-        border = BorderStroke(1.dp, BorderTealSoft)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBgPurple),
+        border = BorderStroke(1.2.dp, BorderTealSoft)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(PrimaryTeal.copy(alpha = 0.12f), CircleShape),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Default.MedicalInformation,
-                    contentDescription = null,
-                    tint = PrimaryTeal,
-                    modifier = Modifier.size(24.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(AiPurple, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BookmarkAdded,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "কনসালটেশন প্রস্তুতি গাইড",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = latestGuide?.title?.ifBlank { "ভিজিট চেকলিস্ট ও প্রস্তুতি" }
+                                ?: "ভিজিট চেকলিস্ট ও গাইড",
+                            fontSize = 12.sp,
+                            color = AiPurple,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                if (latestGuide != null) {
+                    Surface(
+                        color = AiPurple.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = latestGuide.dateFormattedBn,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = AiPurple,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "কোনো সংরক্ষিত পরামর্শ নির্দেশনা নেই",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "ডাক্তার ভিজিটের সময় অডিও রেকর্ড করুন। গুরুত্বপূর্ণ পরামর্শ ও ফলো-আপ এখানে সংরক্ষিত থাকবে।",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+
             Spacer(modifier = Modifier.height(10.dp))
-            Button(
-                onClick = onStartRecording,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = "রেকর্ডিং শুরু করুন", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+            if (latestGuide != null) {
+                Text(
+                    text = "ডাক্তার দেখানোর ৩ দফা চেকলিস্ট:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    PrepChecklistRowItem(label = "১. ডাক্তারের কাছে তুলে ধরবেন (৩০ সেকেন্ড পয়েন্ট)")
+                    PrepChecklistRowItem(label = "২. ডাক্তারকে যা যা দেখাতে হবে (পূর্বের রিপোর্ট/ওষুধ)")
+                    PrepChecklistRowItem(label = "৩. ডাক্তারকে যেসব প্রশ্ন করবেন (প্রয়োজনীয় প্রশ্নাবলি)")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (totalGuidesCount > 1) {
+                        TextButton(
+                            onClick = onOpenHistory,
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HistoryEdu,
+                                contentDescription = null,
+                                tint = AiPurple,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "পূর্বের গাইডসমূহ (${totalGuidesCount.toString().toBengaliDigits()})",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AiPurple
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+
+                    Button(
+                        onClick = { onViewLatestGuide(latestGuide) },
+                        colors = ButtonDefaults.buttonColors(containerColor = AiPurple),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "সম্পূর্ণ গাইড দেখুন",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "ডাক্তার দেখানোর পূর্বে শারীরিক লক্ষণ বিশ্লেষণ করে ডাক্তারের জন্য স্পিকিং পয়েন্ট, দেখানোর নথি ও প্রশ্নাবলির সম্পূর্ণ প্রস্তুতি গাইড তৈরি করুন।",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 17.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onStartSymptomAnalysis,
+                    colors = ButtonDefaults.buttonColors(containerColor = AiPurple),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "প্রস্তুতি শুরু করুন",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun PrepChecklistRowItem(label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = EmeraldGreen,
+            modifier = Modifier.size(14.dp)
+        )
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -1016,54 +1121,52 @@ private fun ConsultationPrepGuideItemCard(
 }
 
 @Composable
-private fun EmptyPrepGuidesCard(onStartSymptomAnalysis: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBgMint),
-        border = BorderStroke(1.dp, BorderMintSoft)
+private fun PrepGuidesHistorySheetContent(
+    guides: List<HealthRecordEntity>,
+    onSelectGuide: (HealthRecordEntity) -> Unit,
+    onDismiss: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(EmeraldGreen.copy(alpha = 0.12f), CircleShape),
-                contentAlignment = Alignment.Center
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Healing,
-                    contentDescription = null,
-                    tint = EmeraldGreen,
-                    modifier = Modifier.size(24.dp)
-                )
+                Column {
+                    Text(
+                        text = "পূর্বের ভিজিট প্রস্তুতি গাইডসমূহ",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "মোট ${guides.size.toString().toBengaliDigits()}টি সংরক্ষিত গাইড",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "বন্ধ করুন")
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "কোনো সংরক্ষিত ভিজিট গাইড নেই",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+        }
+
+        items(guides, key = { it.id }) { guide ->
+            ConsultationPrepGuideItemCard(
+                guide = guide,
+                onClick = { onSelectGuide(guide) }
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "ডাক্তার দেখানোর পূর্বে লক্ষণ বিশ্লেষণ করে প্রস্তুতি গাইড তৈরি করুন।",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Button(
-                onClick = onStartSymptomAnalysis,
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = "লক্ষণ বিশ্লেষণ শুরু করুন", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -1401,47 +1504,85 @@ fun AiChatFloatingBubble(
     isOnline: Boolean,
     onClick: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val alphaAnim by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1f,
+    val infiniteTransition = rememberInfiniteTransition(label = "bubbleAnim")
+    val bounceAnim by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "alpha"
+        label = "bounce"
+    )
+    val scaleAnim by infiniteTransition.animateFloat(
+        initialValue = 0.98f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+    val dotPulse by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dotPulse"
     )
 
-    FloatingActionButton(
-        onClick = onClick,
-        containerColor = PrimaryTeal,
-        contentColor = Color.White,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.height(48.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(if (isOnline) Color(0xFF00E676).copy(alpha = alphaAnim) else Color(0xFFBA1A1A))
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                translationY = bounceAnim
+                scaleX = scaleAnim
+                scaleY = scaleAnim
+            }
+            .size(60.dp)
+            .shadow(elevation = 8.dp, shape = CircleShape)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF00695C),
+                        Color(0xFF004D40)
+                    )
+                )
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            .border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
             Image(
                 painter = painterResource(id = com.example.mediaware.core.designsystem.R.drawable.ic_mediaware_logo),
-                contentDescription = "MediAware AI",
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "MediAware AI",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
+                contentDescription = "MediAware AI সহকারী",
+                modifier = Modifier.size(32.dp)
             )
         }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 4.dp, end = 4.dp)
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .padding(1.5.dp)
+                .clip(CircleShape)
+                .background(
+                    if (isOnline) Color(0xFF00E676).copy(alpha = dotPulse)
+                    else Color(0xFFBA1A1A)
+                )
+        )
     }
 }
 
@@ -2070,80 +2211,3 @@ private fun GeminiThinkingIndicator() {
     }
 }
 
-@Composable
-private fun NextDoseCard(reminder: UpcomingReminderUiModel) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBgAmber),
-        border = BorderStroke(1.dp, BorderAmberSoft)
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(WarmAmber, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Medication,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "পরবর্তী ওষুধের সময়",
-                    fontSize = 11.sp,
-                    color = WarmAmber,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = reminder.titleBn,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "${reminder.timeFormattedBn} • ${reminder.instructionBn}",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun OfflineBanner() {
-    Surface(
-        color = Color(0xFFBA1A1A).copy(alpha = 0.08f),
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, Color(0xFFBA1A1A).copy(alpha = 0.25f)),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = Color(0xFFBA1A1A),
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "ইন্টারনেট সংযোগ নেই — অফলাইন মোড ও লোকাল মেমোরি সক্রিয়",
-                fontSize = 11.sp,
-                color = Color(0xFFBA1A1A),
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}

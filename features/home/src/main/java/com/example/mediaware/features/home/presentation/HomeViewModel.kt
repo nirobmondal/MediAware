@@ -184,6 +184,19 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             }
+            is HomeUiEvent.OnUpdateFollowUpDate -> {
+                viewModelScope.launch {
+                    val entity = consultationDao.getConsultationById(event.consultationId) ?: return@launch
+                    val diffDays = ((event.dateMillis - System.currentTimeMillis()) / (24L * 60L * 60L * 1000L)).coerceAtLeast(1L).toInt()
+                    val dateBn = SimpleDateFormat("d MMMM yyyy", Locale.forLanguageTag("bn")).format(Date(event.dateMillis)).toBengaliDigits()
+                    val updated = entity.copy(
+                        followUpDays = diffDays,
+                        followUpDateStringBn = "$dateBn ($diffDays দিন পর)"
+                    )
+                    consultationDao.updateConsultation(updated)
+                    sendEffect(HomeSideEffect.ShowToast("পরবর্তী ভিজিট তারিখ আপডেট হয়েছে: $dateBn"))
+                }
+            }
             HomeUiEvent.OnClearChat -> {
                 _chatState.update {
                     it.copy(

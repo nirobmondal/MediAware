@@ -208,36 +208,6 @@ fun VisitPrepScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Demographics Summary
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                        border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "রোগীর সাধারণ পরিচিতি",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    color = PrimaryTeal,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = prep.demographicsSummaryBn,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = prep.chiefComplaintsSummaryBn,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
                     // AI Symptoms & Disease Analysis Card
                     Card(
                         shape = RoundedCornerShape(16.dp),

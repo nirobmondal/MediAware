@@ -56,9 +56,11 @@ sealed interface HomeUiEvent : ViewEvent {
     data class OnSendChatMessage(val message: String) : HomeUiEvent
     data class OnScanDocumentImage(val uriString: String) : HomeUiEvent
     data class OnScanDocumentBitmap(val bitmap: Bitmap) : HomeUiEvent
+    data class OnUpdateFollowUpDate(val consultationId: String, val dateMillis: Long) : HomeUiEvent
     data object OnClearChat : HomeUiEvent
 }
 
 sealed interface HomeSideEffect : ViewSideEffect {
     data class NavigateTo(val route: String) : HomeSideEffect
+    data class ShowToast(val messageBn: String) : HomeSideEffect
 }
